@@ -7,13 +7,10 @@ import * as vscode from "vscode";
 /**
  * create new model json file
  */
-async function extractFile() {
-  console.log("Extracting!");
+async function extractFile(s:any) {
+  console.log("Modify essence file");
   const fs = require("fs");
-  var name = "model.json";
-  var name2 = "removedModel.json";
-  console.log(fs.readFileSync(name).toString());
-  var inputData = JSON.parse(fs.readFileSync(name).toString());
+  var inputData = JSON.parse(s);
 
   // Find the index of the last "SuchThat" key
   const suchThatKeys = inputData.mStatements
@@ -33,9 +30,10 @@ async function extractFile() {
 
   // Output the new JSON
   //console.log(JSON.stringify(outputData, null, 2));
-  fs.writeFileSync(name2, JSON.stringify(outputData));
-
-  // return name2;
+  //fs.writeFileSync(name2, JSON.stringify(outputData));
+  const output = JSON.stringify(outputData);
+  console.log(`Output: \n${output}`)
+  return output;
 }
 
 /**
@@ -94,9 +92,7 @@ async function extractFiles(fileName: string) {
     function makeJSON() {
       console.log(`Convert ${fileName} to JSON format`);
       const JSONPromise = new Promise((resolve, reject) => {
-        const path = require(fileName);
-        const dir = path.dirname();
-        const command = `conjure pretty --output-format=astjson ${fileName} > model.json`;
+        const command = `conjure pretty --output-format=astjson ${fileName}`;
         exec(command, (err: any, output: any) => {
 
           // once the command has completed, the callback function is called
@@ -106,7 +102,6 @@ async function extractFiles(fileName: string) {
             reject(err);
           } else {
             // log the output received from the command
-            console.log(output);
             resolve(output.toString());
           }
 
@@ -118,8 +113,8 @@ async function extractFiles(fileName: string) {
 
     cleanModel()
       .then(() => makeJSON())
-      .then(() => extractFile())
-      .then(() => resolve(""));
+      .then((s) => extractFile(s))
+      .then((s) => resolve(s));
   });
 }
 /**
