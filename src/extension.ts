@@ -3,11 +3,13 @@
 import { ReadableStreamDefaultController } from "node:stream/web";
 import { resolve } from "path";
 import * as vscode from "vscode";
+import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * create new model json file
  */
-async function extractFile(s:any) {
+async function extractFile(s: any) {
   console.log("Modify essence file");
   const fs = require("fs");
   var inputData = JSON.parse(s);
@@ -32,113 +34,158 @@ async function extractFile(s:any) {
   //console.log(JSON.stringify(outputData, null, 2));
   //fs.writeFileSync(name2, JSON.stringify(outputData));
   const output = JSON.stringify(outputData);
-  console.log(`Output: \n${output}`)
   return output;
 }
 
-/**
- * @param {*} essence fileName
- */
-async function extractFiles(fileName: string) {
-  return new Promise((resolve, reject) => {
-    // Logic to create file1.json and newFile.json using extract.js
-    // This could involve executing a command, running a separate script, etc.
-    const { exec } = require("node:child_process");
 
-    // run the `ls` command using exec
 
-    const fs = require("fs");
-    /**
-     * https://byby.dev/node-check-if-file-exists
-     * https://www.sohamkamani.com/nodejs/executing-shell-commands/
-     */
-    function cleanModel() {
-      console.log("clean file");
-      const promiseClean = new Promise((resolve, reject) => {
-        if (fs.existsSync("model.json")) {
-          exec("rm model.json", (err: any, output: any) => {
-            // once the command has completed, the callback function is called
-            if (err) {
-              // log and return if we encounter an error
-              console.error("could not execute command: ", err);
-              reject("Error");
-            }
-            // log the output received from the command
-            console.log("delete old model file");
-            console.log("Output clean: \n", output);
-            resolve("Cleaned model");
-          });
-        }
-        if (fs.existsSync("removedModel.json")) {
-          exec("rm removedModel.json", (err: any, output: any) => {
-            // once the command has completed, the callback function is called
-            if (err) {
-              // log and return if we encounter an error
-              console.error("could not execute command: ", err);
-              reject("Error");
-            }
-            // log the output received from the command
-            console.log("delete old modified model file");
-            console.log("Output clean: \n", output);
-            resolve("Cleaned model");
-          });
-        }
-        resolve("no model file");
-      });
-      console.log("Checked model file");
-      return promiseClean;
-    }
+async function makeJSON(fileName: string) {
+  const { exec } = require("node:child_process");
 
-    function makeJSON() {
-      console.log(`Convert ${fileName} to JSON format`);
-      const JSONPromise = new Promise((resolve, reject) => {
-        const command = `conjure pretty --output-format=astjson ${fileName}`;
-        exec(command, (err: any, output: any) => {
+  console.log(`Convert ${fileName} to JSON format`);
+  const JSONPromise = new Promise((resolve, reject) => {
+    const command = `conjure pretty --output-format=astjson ${fileName}`;
+    exec(command, (err: any, output: any) => {
 
-          // once the command has completed, the callback function is called
-          if (err) {
-            // log and return if we encounter an error
-            console.error("could not execute command: ", command, err);
-            reject(err);
-          } else {
-            // log the output received from the command
-            resolve(output.toString());
-          }
+      // once the command has completed, the callback function is called
+      if (err) {
+        // log and return if we encounter an error
+        console.error("could not execute command: ", command, err);
+        reject(err);
+      } else {
+        // log the output received from the command
+        resolve(output.toString());
+      }
 
-        });
-      });
-      console.log(`Finished conversion: ${fileName} to JSON format`);
-      return JSONPromise;
-    }
-
-    cleanModel()
-      .then(() => makeJSON())
-      .then((s) => extractFile(s))
-      .then((s) => resolve(s));
+    });
   });
+  console.log(`Finished conversion: ${fileName} to JSON format`);
+  return JSONPromise;
 }
+// async function extractFiles(fileName: string) {
+//   return new Promise((resolve, reject) => {
+//     // Logic to create file1.json and newFile.json using extract.js
+//     // This could involve executing a command, running a separate script, etc.
+//     const { exec } = require("node:child_process");
+
+//     // run the `ls` command using exec
+
+//     const fs = require("fs");
+/**
+ * https://byby.dev/node-check-if-file-exists
+ * https://www.sohamkamani.com/nodejs/executing-shell-commands/
+ */
+// function cleanModel() {
+//   console.log("clean file");
+//   const promiseClean = new Promise((resolve, reject) => {
+//     if (fs.existsSync("model.json")) {
+//       exec("rm model.json", (err: any, output: any) => {
+//         // once the command has completed, the callback function is called
+//         if (err) {
+//           // log and return if we encounter an error
+//           console.error("could not execute command: ", err);
+//           reject("Error");
+//         }
+//         // log the output received from the command
+//         console.log("delete old model file");
+//         console.log("Output clean: \n", output);
+//         resolve("Cleaned model");
+//       });
+//     }
+//     if (fs.existsSync("removedModel.json")) {
+//       exec("rm removedModel.json", (err: any, output: any) => {
+//         // once the command has completed, the callback function is called
+//         if (err) {
+//           // log and return if we encounter an error
+//           console.error("could not execute command: ", err);
+//           reject("Error");
+//         }
+//         // log the output received from the command
+//         console.log("delete old modified model file");
+//         console.log("Output clean: \n", output);
+//         resolve("Cleaned model");
+//       });
+//     }
+//     resolve("no model file");
+//   });
+//   console.log("Checked model file");
+//   return promiseClean;
+// }
+
+
+
+//     cleanModel()
+//       .then(() => makeJSON())
+//       .then((s) => extractFile(s))
+//       .then((s) => resolve(s));
+//   });
+// }
 /**
  * 
  * @param essence essence file name
  * @param fileNames param file names
  */
-function runConjureSolve(essence: any, fileNames: any) {
-  const { exec } = require("node:child_process");
-  const path = require(essence);
-  const dir = path.dirname();
+async function runConjureSolve(essence: any, mod_essence: any, fileNames: any) {
 
-  const command = `conjure solve --solutions-in-one-file --output-format=astjson ${essence} ${fileNames} > ${fileNames}Solution.json`;
-  exec(command, (err: any, output: any) => {
-    // once the command has completed, the callback function is called
-    if (err) {
-      // log and return if we encounter an error
-      console.error("could not execute command: ", err);
+
+  //cite from https://stackoverflow.com/questions/39569993/vs-code-extension-get-full-path
+  const JSONPromise = new Promise((resolve, reject) => {
+    if (vscode.workspace.workspaceFolders !== undefined) {
+      let wf = vscode.workspace.workspaceFolders[0].uri.path;
+
+      const message = `YOUR-EXTENSION: folder: ${wf}`;
+      const filePath = path.join(wf, 'model.json');
+      const mod_filePath = path.join(wf, 'mod_model.json');
+      fs.writeFileSync(filePath, essence);
+      fs.writeFileSync(mod_filePath, mod_essence);
+      console.log(`file created at ${wf}`);
+
+      solveModel(filePath, fileNames, wf)
+        .then((s1) => solveModel(mod_filePath, fileNames, wf)
+          .then((s2) => {
+            const path1 = path.join(wf, 'model.solutions');
+            const path2 = path.join(wf, 'mod_model.solutions');
+            const sol1 = fs.readFileSync(path1, 'utf-8')
+            const sol2 = fs.readFileSync(path2, 'utf-8')
+            const same = sol1 === sol2
+            resolve(same);
+          }))
+
+    } else {
+      const message = "YOUR-EXTENSION: Working folder not found, open a folder an try again";
+      console.log(message);
+      vscode.window.showErrorMessage(message);
+      reject(message);
     }
-    // log the output received from the command
-    resolve("solve JSON");
-  });
-  console.log(`Running conjure solve: ${fileNames},${essence}`);
+  })
+
+  return JSONPromise;
+
 }
+
+async function solveModel(essencePath: string, paramsPath: any, solPath: string) {
+  const { exec } = require("node:child_process");
+  const command = `conjure solve --solutions-in-one-file --output-format=astjson --output-directory=${solPath} ${essencePath} ${paramsPath}`;
+  console.log(`Running conjure solve: ${essencePath},${paramsPath}`);
+  const JSONPromise = new Promise((resolve, reject) => {
+    exec(command, (err: any, output: any) => {
+      // once the command has completed, the callback function is called
+      if (err) {
+        // log and return if we encounter an error
+        console.error("could not execute command: ", err);
+        reject(err);
+      }
+      // log the output received from the command
+      resolve(output.toString());
+    });
+  })
+
+  return JSONPromise;
+}
+
+
+
+
 
 function checkParam(fileNames: any) {
   const paramPromise = new Promise((resolve, reject) => {
@@ -187,16 +234,14 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage("Enter essence file name");
       } else {
         if (fs.existsSync(modelFile)) {
-          extractFiles(modelFile).then(() =>
-            checkParam(paramFiles)
-              .then((val) => {
-                runConjureSolve("model.json", val);
-                runConjureSolve("removedModel.json", val);
-              })
-              .then(() => {
-                vscode.window.showInformationMessage("Comparison completed!");
-              })
-          );
+          makeJSON(modelFile)
+            .then((model) => extractFile(model)
+              .then((mod_model) => checkParam(paramFiles)
+                .then((params) => {
+                  runConjureSolve(model, mod_model, params).then((comparison) => {
+                    vscode.window.showInformationMessage(`The result of comparison ${comparison}`);
+                  })
+                })))
         } else {
           console.log(modelFile);
           vscode.window.showInformationMessage("Enter valid essence file name");
