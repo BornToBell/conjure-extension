@@ -14,6 +14,10 @@
 		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
 		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
 	},
+	"typedocOptions" : {
+		"entryPoints":["src/extension.ts"],
+		"out":"docs"
+	},
 	"include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }

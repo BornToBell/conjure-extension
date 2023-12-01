@@ -14,7 +14,7 @@ import * as fs from 'fs';
  * @param s json model
  * @returns json model which exclude last constraint
  */
-async function extractFile(s: any) {
+export async function extractFile(s: any) {
   console.log("Modify essence file");
   const fs = require("fs");
   var inputData = JSON.parse(s);
@@ -45,7 +45,7 @@ async function extractFile(s: any) {
  * @param fileName essence file name (full path)
  * @returns json model
  */
-async function makeJSON(fileName: string) {
+export async function makeJSON(fileName: string) {
   const { exec } = require("node:child_process");
 
   console.log(`Convert ${fileName} to JSON format`);
@@ -76,7 +76,7 @@ async function makeJSON(fileName: string) {
  * @param fileNames path to param files
  * @returns solutions are equal
  */
-async function runConjureSolve(essence: any, mod_essence: any, fileNames: any) {
+export async function runConjureSolve(essence: any, mod_essence: any, fileNames: any) {
   //cite from https://stackoverflow.com/questions/39569993/vs-code-extension-get-full-path
   const JSONPromise = new Promise((resolve, reject) => {
     if (vscode.workspace.workspaceFolders !== undefined) {
@@ -122,7 +122,7 @@ async function runConjureSolve(essence: any, mod_essence: any, fileNames: any) {
  * @param solPath workspace path
  * @returns console
  */
-async function solveModel(essencePath: string, paramsPath: any, solPath: string) {
+export async function solveModel(essencePath: string, paramsPath: any, solPath: string) {
   const { exec } = require("node:child_process");
   const command = `conjure solve --solutions-in-one-file --output-format=astjson --output-directory=${solPath} ${essencePath} ${paramsPath}`;
   console.log(`Running conjure solve: ${essencePath},${paramsPath}`);
@@ -147,7 +147,7 @@ async function solveModel(essencePath: string, paramsPath: any, solPath: string)
  * @param fileNames path to param files
  * @returns if param file existed
  */
-function checkParam(fileNames: any) {
+export function checkParam(fileNames: any) {
   const paramPromise = new Promise((resolve, reject) => {
     const fs = require("fs");
     if (fileNames === undefined || fileNames.length <= 0) {
@@ -167,8 +167,12 @@ function checkParam(fileNames: any) {
   return paramPromise;
 }
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+/**
+ * This method is called when your extension is activated
+ * 
+ * @param context 
+ */
+
 export function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
@@ -213,5 +217,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(disposable);
 }
 
-// This method is called when your extension is deactivated
+/**
+ * This method is called when your extension is deactivated
+ */
 export function deactivate() { }
