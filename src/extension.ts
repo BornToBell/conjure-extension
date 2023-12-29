@@ -5,6 +5,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { solve } from "./solve";
+import { multiStepInput } from "./multiStepInputs";
 
 /**
  * This method is called when your extension is activated
@@ -23,7 +24,9 @@ export function activate(context: vscode.ExtensionContext) {
   let disposable = vscode.commands.registerCommand(
     "conjure-model.helloWorld",
     async () => {
-      solve();
+      const essencePath = await multiStepInput(context);
+      console.log(essencePath);
+      solve(essencePath.essence,essencePath.directory,essencePath.params);
     }
   );
 

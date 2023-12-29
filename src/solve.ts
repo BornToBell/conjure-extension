@@ -3,39 +3,32 @@ import * as vscode from "vscode";
 import * as path from 'path';
 import * as fs from 'fs';
 
-export async function solve() {
+export async function solve(modelFile: string, paramPath: string, paramFiles: string[]) {
     // Get the arguments passed to the "Compare" command
     // const fileNames = vscode.window.activeTextEditor?.document.fileName.split(' ') || [];
-    const modelFile = await vscode.window.showInputBox({
-        title: "Enter essence file name",
-    });
-    const paramFiles = await vscode.window.showInputBox({
-        title: "Enter param file name(s)",
-    });
+    // const modelFile = await vscode.window.showInputBox({
+    //     title: "Enter essence file name",
+    // });
+    // const paramFiles = await vscode.window.showInputBox({
+    //     title: "Enter param file name(s)",
+    // });
 
-    const fs = require("fs");
-    if (modelFile === undefined) {
-        vscode.window.showInformationMessage("Enter essence file name");
-    } else {
-        if (fs.existsSync(modelFile)) {
-            makeJSON(modelFile)
-                .then((model) => extractFile(model)
-                    .then((mod_model) => checkParam(paramFiles)
-                        .then((params) => {
-                            runConjureSolve(model, mod_model, params).then((comparison) => {
-                                if (comparison) {
-                                    vscode.window.showInformationMessage("Same solutions");
-                                } else {
-                                    vscode.window.showInformationMessage("Diffrent solutions");
-                                }
+    const params: string[] = paramFiles.map(file => `${paramPath}/${file}`);
 
-                            })
-                        })))
-        } else {
-            console.log(modelFile);
-            vscode.window.showInformationMessage("Enter valid essence file name");
-        }
-    }
+    makeJSON(modelFile)
+        .then((model) => extractFile(model)
+            .then((mod_model) => {
+                runConjureSolve(model, mod_model, params).then((comparison) => {
+                    if (comparison) {
+                        vscode.window.showInformationMessage("Same solutions");
+                    } else {
+                        vscode.window.showInformationMessage("Diffrent solutions");
+                    }
+
+                })
+            }))
+
+
 }
 
 /**
@@ -105,7 +98,7 @@ export async function makeJSON(fileName: string) {
  * @param fileNames path to param files
  * @returns solutions are equal
  */
-export async function runConjureSolve(essence: any, mod_essence: any, fileNames: any) {
+export async function runConjureSolve(essence: any, mod_essence: any, fileNames: string[]) {
     //cite from https://stackoverflow.com/questions/39569993/vs-code-extension-get-full-path
     const JSONPromise = new Promise((resolve, reject) => {
         if (vscode.workspace.workspaceFolders !== undefined) {
@@ -124,15 +117,17 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
             //solve models
             solveModel(filePath, fileNames, wf)
                 .then((s1) => solveModel(mod_filePath, fileNames, wf)
-                    .then((s2) => {
-                        //comapre two solutions file
-                        const path1 = path.join(wf, 'model.solutions');
-                        const path2 = path.join(wf, 'mod_model.solutions');
-                        const sol1 = fs.readFileSync(path1, 'utf-8')
-                        const sol2 = fs.readFileSync(path2, 'utf-8')
-                        const same = sol1 === sol2
-                        resolve(same);
-                    }))
+                    // .then((s2) => {
+                    //     //comapre two solutions file
+                    //     const path1 = path.join(wf, 'model.solutions');
+                    //     const path2 = path.join(wf, 'mod_model.solutions');
+                    //     const sol1 = fs.readFileSync(path1, 'utf-8')
+                    //     const sol2 = fs.readFileSync(path2, 'utf-8')
+                    //     const same = sol1 === sol2
+                    //     resolve(same);
+                    // }))
+                ).then(() => { vscode.window.showErrorMessage('Finished') })
+                
 
         } else {
             const message = "YOUR-EXTENSION: Working folder not found, open a folder an try again";
@@ -151,10 +146,12 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
  * @param solPath workspace path
  * @returns console
  */
-export async function solveModel(essencePath: string, paramsPath: any, solPath: string) {
+export async function solveModel(essencePath: string, paramsPath: string[], solPath: string) {
     const { exec } = require("node:child_process");
-    const command = `conjure solve --solutions-in-one-file --output-format=astjson --output-directory=${solPath} ${essencePath} ${paramsPath}`;
-    console.log(`Running conjure solve: ${essencePath},${paramsPath}`);
+    const joined = paramsPath.join(' ');
+    const outDir = solPath + '/conjure-output';
+    const command = `conjure solve --output-format=json --output-directory=${outDir} ${essencePath} ${joined}`;
+    console.log(`Running conjure solve: ${command}`);
     const JSONPromise = new Promise((resolve, reject) => {
         exec(command, (err: any, output: any) => {
             // once the command has completed, the callback function is called
