@@ -2,6 +2,7 @@
 import * as vscode from "vscode";
 import * as path from 'path';
 import * as fs from 'fs';
+import { collectSol } from "./collectSols";
 
 export async function solve(modelFile: string, paramPath: string, paramFiles: string[]) {
     // Get the arguments passed to the "Compare" command
@@ -18,7 +19,7 @@ export async function solve(modelFile: string, paramPath: string, paramFiles: st
     makeJSON(modelFile)
         .then((model) => extractFile(model)
             .then((mod_model) => {
-                runConjureSolve(model, mod_model, params).then((comparison) => {
+                runConjureSolve(model, mod_model, params, paramFiles).then((comparison) => {
                     if (comparison) {
                         vscode.window.showInformationMessage("Same solutions");
                     } else {
@@ -98,7 +99,7 @@ export async function makeJSON(fileName: string) {
  * @param fileNames path to param files
  * @returns solutions are equal
  */
-export async function runConjureSolve(essence: any, mod_essence: any, fileNames: string[]) {
+export async function runConjureSolve(essence: any, mod_essence: any, fileNames: string[], params: string[]) {
     //cite from https://stackoverflow.com/questions/39569993/vs-code-extension-get-full-path
     const JSONPromise = new Promise((resolve, reject) => {
         if (vscode.workspace.workspaceFolders !== undefined) {
@@ -117,17 +118,24 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
             //solve models
 
             solveModel(filePath, fileNames, wf)
-                .then((s1) => solveModel(mod_filePath, fileNames, wf)
-                    // .then((s2) => {
-                    //     //compare two solutions file
-                    //     const path1 = path.join(wf, 'model.solutions');
-                    //     const path2 = path.join(wf, 'mod_model.solutions');
-                    //     const sol1 = fs.readFileSync(path1, 'utf-8')
-                    //     const sol2 = fs.readFileSync(path2, 'utf-8')
-                    //     const same = sol1 === sol2
-                    //     resolve(same);
-                    // }))
-                ).then(() => { vscode.window.showInformationMessage('Finished') })
+                .then(() => {
+                    return collectSol('original', wf, params)
+                })
+                .then((data1) => {
+                    solveModel(mod_filePath, fileNames, wf)
+                        .then(() => {
+                            return collectSol('removed', wf, params);
+                        }).then((data2) => {
+                            const data = [data1,data2]
+                            const solutions = {
+                                solutions:data
+                            }
+                            const jsonData = JSON.stringify(solutions);
+                            const solPath = path.join(wf,'all_solutions.json')
+                            fs.writeFileSync(solPath,jsonData)
+                        })
+                })
+                .then(() => { vscode.window.showInformationMessage('Finished') })
 
 
         } else {

@@ -105,7 +105,7 @@ async function deleteFiles(name: string, dir: string) {
 
 }
 
-const findByName = async (name: string, dir: string) => {
+export const findByName = async (name: string, dir: string) => {
     /* This code is taken from https://www.webmound.com/nodejs-find-files-matching-name-pattern-extension/ (last accessed 03-01-2024)*/
     /* BEGIN Copied Code */
     const path = require('path');
