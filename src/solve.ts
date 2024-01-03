@@ -22,7 +22,7 @@ export async function solve(modelFile: string, paramPath: string, paramFiles: st
                     if (comparison) {
                         vscode.window.showInformationMessage("Same solutions");
                     } else {
-                        vscode.window.showInformationMessage("Diffrent solutions");
+                        vscode.window.showInformationMessage("Different solutions");
                     }
 
                 })
@@ -92,7 +92,7 @@ export async function makeJSON(fileName: string) {
 }
 
 /**
- * Comapre the solutions
+ * Compare the solutions
  * @param essence model json
  * @param mod_essence modified model json
  * @param fileNames path to param files
@@ -104,7 +104,7 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
         if (vscode.workspace.workspaceFolders !== undefined) {
             let wf = vscode.workspace.workspaceFolders[0].uri.path;
 
-            //Get worksapce path
+            //Get workspace path
             const message = `YOUR-EXTENSION: folder: ${wf}`;
 
             //create two model json files in work space
@@ -118,7 +118,7 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
             solveModel(filePath, fileNames, wf)
                 .then((s1) => solveModel(mod_filePath, fileNames, wf)
                     // .then((s2) => {
-                    //     //comapre two solutions file
+                    //     //compare two solutions file
                     //     const path1 = path.join(wf, 'model.solutions');
                     //     const path2 = path.join(wf, 'mod_model.solutions');
                     //     const sol1 = fs.readFileSync(path1, 'utf-8')
@@ -126,7 +126,7 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
                     //     const same = sol1 === sol2
                     //     resolve(same);
                     // }))
-                ).then(() => { vscode.window.showErrorMessage('Finished') })
+                ).then(() => { vscode.window.showInformationMessage('Finished') })
                 
 
         } else {
@@ -140,7 +140,7 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
 }
 
 /**
- * solve CSP and save solutions in worksapce
+ * solve CSP and save solutions in workspace
  * @param essencePath path to essence file
  * @param paramsPath path to param file
  * @param solPath workspace path

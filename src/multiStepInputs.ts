@@ -13,14 +13,14 @@ import { resolve } from 'path';
  */
 export async function multiStepInput(context: ExtensionContext) {
 
-    class MyButton implements QuickInputButton {
-        constructor(public iconPath: { light: Uri; dark: Uri; }, public tooltip: string) { }
-    }
+    // class MyButton implements QuickInputButton {
+    //     constructor(public iconPath: { light: Uri; dark: Uri; }, public tooltip: string) { }
+    // }
 
-    const createResourceGroupButton = new MyButton({
-        dark: Uri.file(context.asAbsolutePath('resources/dark/add.svg')),
-        light: Uri.file(context.asAbsolutePath('resources/light/add.svg')),
-    }, 'Create Resource Group');
+    // const createResourceGroupButton = new MyButton({
+    //     dark: Uri.file(context.asAbsolutePath('resources/dark/add.svg')),
+    //     light: Uri.file(context.asAbsolutePath('resources/light/add.svg')),
+    // }, 'Create Resource Group');
 
 
 
@@ -37,17 +37,22 @@ export async function multiStepInput(context: ExtensionContext) {
         params: string[];
     }
 
+    /**
+     * Start multi-step actions.
+     * @returns state(collection of inputs)
+     */
     async function collectInputs() {
         const state = {} as Partial<State>;
-        // console.log(context);
-
         await MultiStepInput.run(input => askParam(input, state));
         return state as State;
     }
 
-    const title = 'Create Application Service';
-
-    function getFilesFoler(dir: string): string[] {
+    /**
+     * Find essence files in workspace.
+     * @param dir Directory of workspace
+     * @returns essence files
+     */
+    function getFilesFolder(dir: string): string[] {
         let Files: string[] = [];
         const files = fs.readdirSync(dir, { withFileTypes: true });
         files.map(dir => {
@@ -58,6 +63,11 @@ export async function multiStepInput(context: ExtensionContext) {
         return Files;
     }
 
+    /**
+     * Find essence files in workspace.
+     * @param dir directory which has parameter files
+     * @returns parameter files
+     */
     function getParams(dir: string): string[] {
         let Files: string[] = [];
         const files = fs.readdirSync(dir, { withFileTypes: true });
@@ -69,17 +79,21 @@ export async function multiStepInput(context: ExtensionContext) {
         return Files;
     }
 
-
+    /**
+     * Ask whether parameter file is required.
+     * @param input 
+     * @param state 
+     * @returns Go to step to pick essence files.
+     */
     async function askParam(input: MultiStepInput, state: Partial<State>) {
         const resourceGroups: QuickPickItem[] = ['Yes', 'No'].map(label => ({ label }));
         const pick = await input.showQuickPick({
-            title,
+            title:'Ask Exist of Param',
             step: 0,
             totalSteps: 3,
             placeholder: 'Do you use parameter file(s)?',
             items: resourceGroups,
             activeItem: typeof state.resourceGroup !== 'string' ? state.resourceGroup : undefined,
-            // buttons: [createResourceGroupButton],
             shouldResume: shouldResume
         });
         state.exist = pick.label;
@@ -92,13 +106,15 @@ export async function multiStepInput(context: ExtensionContext) {
         } else {
             state.existParam = true;
         }
-
         return (input: MultiStepInput) => pickEssence(input, state);
-
-
-
     }
 
+    /**
+     * Select an essence file.
+     * @param input 
+     * @param state 
+     * @returns Go to ask directory.
+     */
     async function pickEssence(input: MultiStepInput, state: Partial<State>) {
         const dir = workspace.rootPath;
         if (dir == undefined) {
@@ -106,16 +122,16 @@ export async function multiStepInput(context: ExtensionContext) {
             window.showErrorMessage(message);
         } else {
 
-            const resourceGroups: QuickPickItem[] = getFilesFoler(dir).map(file => ({ label: file }));
+            const resourceGroups: QuickPickItem[] = getFilesFolder(dir).map(file => ({ label: file }));
 
             if (resourceGroups.length == 0) {
                 const message1 = "YOUR-EXTENSION: Essence file not found, try another folder";
                 window.showErrorMessage(message1);
             } else {
                 const pick = await input.showQuickPick({
-                    title,
+                    title: 'Pick essence',
                     step: 1,
-                    totalSteps: state.existParam? 3:1,
+                    totalSteps: state.existParam ? 3 : 1,
                     placeholder: 'Pick a essence file',
                     items: resourceGroups,
                     activeItem: typeof state.resourceGroup !== 'string' ? state.resourceGroup : undefined,
@@ -123,7 +139,7 @@ export async function multiStepInput(context: ExtensionContext) {
                     shouldResume: shouldResume
                 });
                 state.essence = dir + '/' + pick.label
-                if(state.existParam) {
+                if (state.existParam) {
                     return (input: MultiStepInput) => askDirectory(input, state);
                 }
             }
@@ -131,7 +147,12 @@ export async function multiStepInput(context: ExtensionContext) {
         }
     }
 
-    function getFolers(dir: string): string[] {
+    /**
+     * Get directories in workspace.
+     * @param dir 
+     * @returns directories
+     */
+    function getFolders(dir: string): string[] {
         let Folders: string[] = [];
         const files = fs.readdirSync(dir, { withFileTypes: true });
         files.map(dir => {
@@ -142,20 +163,24 @@ export async function multiStepInput(context: ExtensionContext) {
         return Folders;
     }
 
+    /**
+     * Ask whether parameter files exist in directory in workspace.
+     * @param input 
+     * @param state 
+     * @returns Go to pick directory or pick parameter files.
+     */
     async function askDirectory(input: MultiStepInput, state: Partial<State>) {
         const resourceGroups: QuickPickItem[] = ['Yes', 'No'].map(label => ({ label }));
         const pick = await input.showQuickPick({
-            title,
+            title: 'Ask Dir',
             step: 2,
             totalSteps: 3,
             placeholder: 'Do param file(s) exist in workspace?',
             items: resourceGroups,
             activeItem: typeof state.resourceGroup !== 'string' ? state.resourceGroup : undefined,
-            // buttons: [createResourceGroupButton],
             shouldResume: shouldResume
         });
         state.exist = pick.label;
-        // state.directory = workspace.rootPath;
         if (pick.label == 'Yes') {
             return (input: MultiStepInput) => pickParams(input, state);
         } else {
@@ -164,79 +189,68 @@ export async function multiStepInput(context: ExtensionContext) {
 
     }
 
+    /**
+     * Pick a directory which should has parameter file(s).
+     * @param input 
+     * @param state 
+     * @returns Go to pick parameter file.
+     */
     async function pickDirectory(input: MultiStepInput, state: Partial<State>) {
         if (workspace.rootPath != undefined) {
             const dir = workspace.rootPath;
-            const folders: string[] = getFolers(dir);
+            const folders: string[] = getFolders(dir);
+            let resourceGroups: QuickPickItem[];
             if (folders.length > 0) {
-                // console.log(workspace.workspaceFolders)
-                const resourceGroups: QuickPickItem[] = folders.map(f => ({ label: f }));
-                const pick = await input.showQuickPick({
-                    title,
-                    step: 3,
-                    totalSteps: 4,
-                    placeholder: 'Select Directory',
-                    items: resourceGroups,
-                    activeItem: typeof state.resourceGroup !== 'string' ? state.resourceGroup : undefined,
-                    // buttons: [createResourceGroupButton],
-                    shouldResume: shouldResume
-                });
-                console.log(pick.label)
-                state.directory = dir + '/' + pick.label;
-                return (input: MultiStepInput) => pickParams(input, state);
+                resourceGroups = folders.map(f => ({ label: f }));
             } else {
-                const message1 = "YOUR-EXTENSION: Directory does noy exist, try another folder";
-                window.showErrorMessage(message1);
+                resourceGroups = [];
             }
+            const pick = await input.showQuickPick({
+                title: 'Directory',
+                step: 3,
+                totalSteps: 4,
+                placeholder: 'Select Directory',
+                items: resourceGroups,
+                activeItem: typeof state.resourceGroup !== 'string' ? state.resourceGroup : undefined,
+                shouldResume: shouldResume
+            });
+            state.directory = dir + '/' + pick.label;
+            return (input: MultiStepInput) => pickParams(input, state);
         }
     }
 
+    /**
+     * Pick parameter file(s)
+     * @param input 
+     * @param state 
+     */
     async function pickParams(input: MultiStepInput, state: Partial<State>) {
         const additionalSteps = state.exist === 'No' ? 1 : 0;
         const dir = workspace.rootPath;
-        console.log(state.directory);
         if (state.directory != undefined) {
             const params: string[] = getParams(state.directory);
+            let resourceGroups: QuickPickItem[];
             if (params.length > 0) {
-                const resourceGroups: QuickPickItem[] = params.map(f => ({ label: f }));
-                // console.log(state.directory)
-                const options: QuickPickOptions = {
-                    canPickMany: true
-                }
-                const pick = await input.showMultiQuickPick({
-                    title,
-                    step: 3 + additionalSteps,
-                    totalSteps: 3 + additionalSteps,
-                    placeholder: 'Choose param file(s)',
-                    items: resourceGroups,
-                    activeItem: typeof state.resourceGroup !== 'string' ? state.resourceGroup : undefined,
-                    // buttons: [createResourceGroupButton],
-                    shouldResume: shouldResume
-                }, options);
-                state.params = pick.map(item => item.label)
-                // return (input: MultiStepInput) => pickRuntime(input, state);
+                resourceGroups = params.map(f => ({ label: f }));
             } else {
-                const message1 = "YOUR-EXTENSION: Parameters file does noy exist, try another folder";
-                window.showErrorMessage(message1);
+                resourceGroups = [];
             }
+            const options: QuickPickOptions = {
+                canPickMany: true
+            }
+            const pick = await input.showMultiQuickPick({
+                title: 'Parameter file',
+                step: 3 + additionalSteps,
+                totalSteps: 3 + additionalSteps,
+                placeholder: 'Choose param file(s)',
+                items: resourceGroups,
+                activeItem: typeof state.resourceGroup !== 'string' ? state.resourceGroup : undefined,
+                shouldResume: shouldResume
+            }, options);
+            state.params = pick.map(item => item.label)
         }
 
     }
-
-    // async function pickRuntime(input: MultiStepInput, state: Partial<State>) {
-    // 	const additionalSteps = typeof state.resourceGroup === 'string' ? 1 : 0;
-    // 	const runtimes = await getAvailableRuntimes(state.resourceGroup!, undefined /* TODO: token */);
-    // 	// TODO: Remember currently active item when navigating back.
-    // 	state.runtime = await input.showQuickPick({
-    // 		title,
-    // 		step: 3 + additionalSteps,
-    // 		totalSteps: 3 + additionalSteps,
-    // 		placeholder: 'Pick a runtime',
-    // 		items: runtimes,
-    // 		activeItem: state.runtime,
-    // 		shouldResume: shouldResume
-    // 	});
-    // }
 
     function shouldResume() {
         // Could show a notification with the option to resume.
@@ -244,24 +258,7 @@ export async function multiStepInput(context: ExtensionContext) {
             // noop
         });
     }
-
-    async function validateNameIsUnique(name: string) {
-        // ...validate...
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return name === 'vscode' ? 'Name not unique' : undefined;
-    }
-
-    async function validateResponse(res: string) {
-
-    }
-
-    // async function getAvailableRuntimes(resourceGroup: QuickPickItem | string, token?: CancellationToken): Promise<QuickPickItem[]> {
-    // 	// ...retrieve...
-    // 	await new Promise(resolve => setTimeout(resolve, 1000));
-    // 	return ['Node 8.9', 'Node 6.11', 'Node 4.5']
-    // 		.map(label => ({ label }));
-    // }
-
+    
     const state = await collectInputs();
     return state;
 
@@ -364,9 +361,12 @@ class MultiStepInput {
                     ...(this.steps.length > 1 ? [QuickInputButtons.Back] : []),
                     ...(buttons || [])
                 ];
+                if (items.length === 0) {       
+                    window.showErrorMessage(`${input.title} does not exist.`);
+                    reject(InputFlowAction.back);
+                }
                 disposables.push(
                     input.onDidTriggerButton(item => {
-                        // console.log('ok')
                         if (item === QuickInputButtons.Back) {
                             reject(InputFlowAction.back);
                         } else {
@@ -374,9 +374,7 @@ class MultiStepInput {
                         }
                     }),
                     input.onDidChangeSelection(items => {
-                        // console.log('ok')
                         if (!input.canSelectMany) {
-                            // console.log(`select ${items[0].label}`)
                             resolve(items[0])
                         }
 
@@ -387,14 +385,6 @@ class MultiStepInput {
                         })()
                             .catch(reject);
                     })
-                    // input.onDidAccept(() => {
-                    //     if(input.activeItems.length > 0) {
-                    //         resolve(items);
-                    //     } else {
-                    //         window.showErrorMessage('Choose more than 1 param file.');
-                    //     }
-                    // })
-
                 );
                 if (this.current) {
                     this.current.dispose();
@@ -426,9 +416,14 @@ class MultiStepInput {
                     ...(this.steps.length > 1 ? [QuickInputButtons.Back] : []),
                     ...(buttons || [])
                 ];
+
+                if (items.length === 0) {
+                    
+                    window.showErrorMessage(`${input.title} does not exist.`);
+                    reject(InputFlowAction.back);
+                }
                 disposables.push(
                     input.onDidTriggerButton(item => {
-                        console.log('Back')
                         if (item === QuickInputButtons.Back) {
                             reject(InputFlowAction.back);
                         } else {
@@ -436,9 +431,11 @@ class MultiStepInput {
                         }
                     }),
                     input.onDidAccept(() => {
-                        if (input.items.length > 0) {
-                            resolve(input.selectedItems);
+                        if (input.selectedItems.length > 0) {
+                            const items: T[] = input.selectedItems.map(pick => ({ ...pick }))
+                            resolve(items);
                         } else {
+                            reject(InputFlowAction.resume);
                             window.showErrorMessage('Choose more than 1 param file.');
                         }
                     })
