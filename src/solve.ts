@@ -108,13 +108,14 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
             const message = `YOUR-EXTENSION: folder: ${wf}`;
 
             //create two model json files in work space
-            const filePath = path.join(wf, 'model.json');
-            const mod_filePath = path.join(wf, 'mod_model.json');
+            const filePath = path.join(wf, 'original.json');
+            const mod_filePath = path.join(wf, 'removed.json');
             fs.writeFileSync(filePath, essence);
             fs.writeFileSync(mod_filePath, mod_essence);
             console.log(`file created at ${wf}`);
 
             //solve models
+
             solveModel(filePath, fileNames, wf)
                 .then((s1) => solveModel(mod_filePath, fileNames, wf)
                     // .then((s2) => {
@@ -127,7 +128,7 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
                     //     resolve(same);
                     // }))
                 ).then(() => { vscode.window.showInformationMessage('Finished') })
-                
+
 
         } else {
             const message = "YOUR-EXTENSION: Working folder not found, open a folder an try again";
@@ -138,6 +139,7 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
     })
     return JSONPromise;
 }
+
 
 /**
  * solve CSP and save solutions in workspace

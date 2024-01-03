@@ -6,6 +6,8 @@
 import * as vscode from "vscode";
 import { solve } from "./solve";
 import { multiStepInput } from "./multiStepInputs";
+import { cleanAll } from "./clean";
+import { window } from "vscode";
 
 /**
  * This method is called when your extension is activated
@@ -24,9 +26,16 @@ export function activate(context: vscode.ExtensionContext) {
   let disposable = vscode.commands.registerCommand(
     "conjure-model.helloWorld",
     async () => {
-      const essencePath = await multiStepInput(context);
-      console.log(essencePath);
-      solve(essencePath.essence,essencePath.directory,essencePath.params);
+      cleanAll()
+        .then((result) => multiStepInput(context)
+          .then((inputs) => {
+            console.log(inputs);
+            solve(inputs.essence, inputs.directory, inputs.params);
+          }))
+        .catch((error) => {
+          console.log(error);
+          window.showErrorMessage(error);
+        })
     }
   );
 
