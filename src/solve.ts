@@ -3,6 +3,8 @@ import * as vscode from "vscode";
 import * as path from 'path';
 import * as fs from 'fs';
 import { collectSol } from "./collectSols";
+import { simpleReport } from "./report";
+import { cleanConjure } from "./clean";
 
 export async function solve(modelFile: string, paramPath: string, paramFiles: string[]) {
     // Get the arguments passed to the "Compare" command
@@ -119,6 +121,7 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
 
             solveModel(filePath, fileNames, wf)
                 .then(() => {
+                    cleanConjure()
                     return collectSol('original', wf, params)
                 })
                 .then((data1) => {
@@ -126,15 +129,16 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
                         .then(() => {
                             return collectSol('removed', wf, params);
                         }).then((data2) => {
-                            const data = [data1,data2]
+                            const data = [data1, data2]
                             const solutions = {
-                                solutions:data
+                                Models: data
                             }
                             const jsonData = JSON.stringify(solutions);
-                            const solPath = path.join(wf,'all_solutions.json')
-                            fs.writeFileSync(solPath,jsonData)
+                            const solPath = path.join(wf, 'all_solutions.json')
+                            fs.writeFileSync(solPath, jsonData)
                         })
                 })
+                .then(() => { simpleReport(wf) })
                 .then(() => { vscode.window.showInformationMessage('Finished') })
 
 

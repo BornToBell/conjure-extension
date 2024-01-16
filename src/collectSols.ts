@@ -68,7 +68,7 @@ export async function findSolByName(name: string, dir: string, param: string) {
                         // console.log('solution', jsonData)
                         const data = {
                             parameter: param + '.param',
-                            solution: jsonData
+                            information: [{solution:jsonData}]
                         }
                         resolve(data);
                     }
@@ -76,8 +76,43 @@ export async function findSolByName(name: string, dir: string, param: string) {
             })
             .finally(() => {
                 const data = {
-                    title: param + '.param',
-                    solutions: ''
+                    parameter: param + '.param',
+                    information: [{solution:""}]
+                }
+                resolve(data)
+            })
+
+    })
+
+    /* END  Copied Code*/
+}
+
+export async function findSolByNameDetail(name: string, dir: string, param: string) {
+    /* This code is taken from https://www.webmound.com/nodejs-find-files-matching-name-pattern-extension/ (last accessed 03-01-2024)*/
+    /* BEGIN Copied Code */
+    return await new Promise((resolve, reject) => {
+        const path = require('path');
+        readdir(dir)
+            .then((files) => {
+                files.forEach((file) => {
+                    const fileExt = path.extname(file);
+                    if (file.includes(name) && file.endsWith('.solution.json') && file.includes(param)) {
+                        const fullPath = dir + '/' + file;
+                        let rawData = fs.readFileSync(fullPath, 'utf8');
+                        const jsonData = JSON.parse(rawData);
+                        // console.log('solution', jsonData)
+                        const data = {
+                            parameter: param + '.param',
+                            information: [{solution:jsonData}]
+                        }
+                        resolve(data);
+                    }
+                })
+            })
+            .finally(() => {
+                const data = {
+                    parameter: param + '.param',
+                    information: [{solution:""}]
                 }
                 resolve(data)
             })

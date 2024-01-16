@@ -76,7 +76,7 @@ async function execCommand(command: string) {
 async function deleteDir(dir: string, path: string) {
     const fullPath = path + dir;
     const fs = require('fs');
-    fs.rm(fullPath, { recursive: true, force: true }, (err) => {
+    fs.rm(fullPath, { recursive: true, force: true }, (err:any) => {
         if (err) {
             // File deletion failed 
             console.error(err.message);
