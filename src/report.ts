@@ -12,20 +12,20 @@ export async function simpleReport(path: string) {
     const paramFile = findParams(data.Models[0]);
     const originalParam = findNonEmptySolutions(data.Models[0]);
     const removedCount = findNonEmptySolutions(data.Models[1]);
-    const uniqueToOriginal = removedCount.filter((file) => !originalParam.includes(file))
-    console.log(originalParam, removedCount)
+    const uniqueToOriginal = removedCount.filter((file) => !originalParam.includes(file));
+    console.log(originalParam, removedCount);
     const diff = {
         Difference: [
             { Both: removedCount.length - uniqueToOriginal.length },
             { Neither: paramFile.length - removedCount.length },
             { Either: [{ Count: uniqueToOriginal.length }, { Name: uniqueToOriginal }] }
         ]
-    }
+    };
 
     const jsonData = JSON.stringify(diff);
 
-    const diffPath = path + '/simple_report.json'
-    fs.writeFileSync(diffPath, jsonData)
+    const diffPath = path + '/simple_report.json';
+    fs.writeFileSync(diffPath, jsonData);
 }
 
 function makeModel(model: string, params: number, sols: number) {
@@ -34,7 +34,7 @@ function makeModel(model: string, params: number, sols: number) {
             { 'having solution(s)': sols },
             { 'no solution': params - sols }
         ]
-    }
+    };
 }
 
 interface Information {
@@ -57,7 +57,7 @@ interface Data {
 
 
 function findNonEmptySolutions(model: Model): string[] {
-    return model.solutions.filter((sol) => sol.information.some(notEmpty)).map((sol) => sol.parameter)
+    return model.solutions.filter((sol) => sol.information.some(notEmpty)).map((sol) => sol.parameter);
 
 }
 
@@ -68,7 +68,7 @@ function notEmpty(info: Information) {
 function findParams(model: Model): string[] {
     return model.solutions.map((sol) => {
         return sol.parameter;
-    })
+    });
 }
 
 

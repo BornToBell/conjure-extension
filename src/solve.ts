@@ -28,8 +28,8 @@ export async function solve(modelFile: string, paramPath: string, paramFiles: st
                         vscode.window.showInformationMessage("Different solutions");
                     }
 
-                })
-            }))
+                });
+            }));
 
 
 }
@@ -120,26 +120,27 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
             //solve models
 
             solveModel(filePath, fileNames, wf)
-                .then(() => {
-                    cleanConjure()
-                    return collectSol('original', wf, params)
+                .then((s1) => {
+                    console.log("After solved Model",s1);
+                    cleanConjure();
+                    return collectSol('original', wf, params);
                 })
                 .then((data1) => {
                     solveModel(mod_filePath, fileNames, wf)
                         .then(() => {
                             return collectSol('removed', wf, params);
                         }).then((data2) => {
-                            const data = [data1, data2]
+                            const data = [data1, data2];
                             const solutions = {
                                 Models: data
-                            }
+                            };
                             const jsonData = JSON.stringify(solutions);
-                            const solPath = path.join(wf, 'all_solutions.json')
-                            fs.writeFileSync(solPath, jsonData)
-                        })
+                            const solPath = path.join(wf, 'all_solutions.json');
+                            fs.writeFileSync(solPath, jsonData);
+                        });
                 })
-                .then(() => { simpleReport(wf) })
-                .then(() => { vscode.window.showInformationMessage('Finished') })
+                .then(() => { simpleReport(wf); })
+                .then(() => { vscode.window.showInformationMessage('Finished'); });
 
 
         } else {
@@ -148,7 +149,7 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
             vscode.window.showErrorMessage(message);
             reject(message);
         }
-    })
+    });
     return JSONPromise;
 }
 
@@ -175,9 +176,11 @@ export async function solveModel(essencePath: string, paramsPath: string[], solP
                 reject(err);
             }
             // log the output received from the command
+            // console.log("SolveModel ",output.toString());
+
             resolve(output.toString());
         });
-    })
+    });
 
     return JSONPromise;
 }
@@ -205,4 +208,12 @@ export function checkParam(fileNames: any) {
         }
     });
     return paramPromise;
+}
+function collectInfo(path:string, paramsPath:string[]) {
+    var fullPath:string[] = [];
+    const removedParams = paramsPath.map(p => p.replace('.param',''));
+    for(let i = 0; i < paramsPath.length; i++) {
+        fullPath[i] = `${path}/conjure-output/model000001-${removedParams[i]}.eprime-info`;
+    }
+
 }

@@ -1,4 +1,4 @@
-import { workspace, window } from "vscode"
+import { workspace, window } from "vscode";
 import { unlink } from "fs";
 import { readdir } from "fs/promises";
 import { machine } from "os";
@@ -9,10 +9,10 @@ export async function cleanAll() {
     return await new Promise((resolve, reject) => {
         const path: undefined | string = workspace.rootPath;
         if (path === undefined) {
-            const message = 'Open the folder containing the essence file.'
-            reject(message)
+            const message = 'Open the folder containing the essence file.';
+            reject(message);
         } else {
-            const promises: any[] = []
+            const promises: any[] = [];
             // const commands: string[] = [`rm ${path}/mode_model*`, `rm ${path}/model*`, `rm -rf ${path}/conjure-output`]
             // commands.forEach((command) => {
             //     promises.push(execCommand(command))
@@ -20,38 +20,38 @@ export async function cleanAll() {
             // promises.push(deleteFiles('mod_model', path))
             const dir = path + '/conjure-output';
 
-            promises.push(deleteFiles('original', path))
-            promises.push(deleteFiles('removed', path))
-            promises.push(deleteDir('/conjure-output',path))
+            promises.push(deleteFiles('original', path));
+            promises.push(deleteFiles('removed', path));
+            promises.push(deleteDir('/conjure-output',path));
             Promise.all(promises).then(result => {
                 window.showInformationMessage('Cleaned workspace');
                 resolve(new Error("Cleaned workspace"));
             }).catch((error) => {
                 console.log(error);
-            })
+            });
 
         }
-    })
+    });
 }
 
 export async function cleanConjure() {
     return await new Promise((resolve, reject) => {
         const path: undefined | string = workspace.rootPath;
         if (path === undefined) {
-            const message = 'Open the folder containing the essence file.'
-            reject(message)
+            const message = 'Open the folder containing the essence file.';
+            reject(message);
         } else {
-            const promises: any[] = []
-            promises.push(deleteDir('/conjure-output',path))
+            const promises: any[] = [];
+            promises.push(deleteDir('/conjure-output',path));
             Promise.all(promises).then(result => {
                 window.showInformationMessage('Cleaned workspace');
                 resolve(new Error("Cleaned workspace"));
             }).catch((error) => {
                 console.log(error);
-            })
+            });
 
         }
-    })
+    });
 }
 
 async function execCommand(command: string) {
@@ -65,12 +65,12 @@ async function execCommand(command: string) {
                 reject(err);
             } else {
                 // log the output received from the command
-                console.log(`Success ${command}`)
+                console.log(`Success ${command}`);
                 resolve(output.toString());
             }
 
         });
-    })
+    });
 }
 
 async function deleteDir(dir: string, path: string) {
@@ -83,7 +83,7 @@ async function deleteDir(dir: string, path: string) {
             return;
         }
         console.log(`${fullPath} was deleted`);
-    })
+    });
 }
 
 async function deleteFiles(name: string, dir: string) {
@@ -99,7 +99,7 @@ async function deleteFiles(name: string, dir: string) {
                     return;
                 }
                 console.log(`${fullPath} was deleted`);
-            })
+            });
         });
     }
 
