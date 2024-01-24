@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import * as path from 'path';
 import * as fs from 'fs';
 import { collectSol } from "./collectSols";
-import { simpleReport } from "./report";
+import { detailReport, simpleReport } from "./report";
 import { cleanConjure } from "./clean";
 
 export async function solve(modelFile: string, paramPath: string, paramFiles: string[]) {
@@ -113,33 +113,36 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
             //create two model json files in work space
             const filePath = path.join(wf, 'original.json');
             const mod_filePath = path.join(wf, 'removed.json');
+            const outputPath = path.join(wf, '/conjure-output')
             fs.writeFileSync(filePath, essence);
             fs.writeFileSync(mod_filePath, mod_essence);
             console.log(`file created at ${wf}`);
 
             //solve models
-
-            solveModel(filePath, fileNames, wf)
-                .then((s1) => {
-                    console.log("After solved Model",s1);
-                    cleanConjure();
-                    return collectSol('original', wf, params);
+            cleanConjure()
+                .then(() => {
+                    solveModel(filePath, fileNames, wf)
+                        .then((s1) => {
+                            console.log("After solved Model", s1);
+                            return collectSol('original', outputPath, params);
+                        })
+                        .then((data1) => {
+                            cleanConjure();
+                            solveModel(mod_filePath, fileNames, wf)
+                                .then(() => {
+                                    return collectSol('removed', outputPath, params);
+                                }).then((data2) => {
+                                    const data = [data1, data2];
+                                    const solutions = {
+                                        Models: data
+                                    };
+                                    const jsonData = JSON.stringify(solutions);
+                                    const solPath = path.join(wf, 'all_solutions.json');
+                                    fs.writeFileSync(solPath, jsonData);
+                                });
+                        })
                 })
-                .then((data1) => {
-                    solveModel(mod_filePath, fileNames, wf)
-                        .then(() => {
-                            return collectSol('removed', wf, params);
-                        }).then((data2) => {
-                            const data = [data1, data2];
-                            const solutions = {
-                                Models: data
-                            };
-                            const jsonData = JSON.stringify(solutions);
-                            const solPath = path.join(wf, 'all_solutions.json');
-                            fs.writeFileSync(solPath, jsonData);
-                        });
-                })
-                .then(() => { simpleReport(wf); })
+                .then(() => { simpleReport(wf); detailReport(wf)})
                 .then(() => { vscode.window.showInformationMessage('Finished'); });
 
 
@@ -209,10 +212,10 @@ export function checkParam(fileNames: any) {
     });
     return paramPromise;
 }
-function collectInfo(path:string, paramsPath:string[]) {
-    var fullPath:string[] = [];
-    const removedParams = paramsPath.map(p => p.replace('.param',''));
-    for(let i = 0; i < paramsPath.length; i++) {
+function collectInfo(path: string, paramsPath: string[]) {
+    var fullPath: string[] = [];
+    const removedParams = paramsPath.map(p => p.replace('.param', ''));
+    for (let i = 0; i < paramsPath.length; i++) {
         fullPath[i] = `${path}/conjure-output/model000001-${removedParams[i]}.eprime-info`;
     }
 

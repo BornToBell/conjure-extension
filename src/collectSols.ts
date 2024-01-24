@@ -9,8 +9,8 @@ interface solFormat {
 }
 
 export async function collectSol(name: string, path: string, params: string[]) {
-  const files = await findSolsByName(name, path);
-  // console.log(files);
+  // const files = await findSolsByName(name, path);
+  // // console.log(files);
   let trimmed = params.map((param) => {
     return param.replace(".param", "");
   });
@@ -18,7 +18,7 @@ export async function collectSol(name: string, path: string, params: string[]) {
   const promises: any[] = [];
   let data: solFormat;
   trimmed.forEach((param) => {
-    promises.push(findSolByName(name, path, param));
+    promises.push(findSolByNameDetail(name, path, param));
   });
 
   return Promise.all(promises).then((result) => {
@@ -91,8 +91,8 @@ export async function findSolByNameDetail(
   /* BEGIN Copied Code */
   return await new Promise((resolve, reject) => {
     const path = require("path");
-    var info:any[];
-    var sol:any[];
+    var info:any[] =[];
+    var sol:any[]=[{solution:""}];
     readdir(dir)
       .then((files) => {
         files.forEach((file) => {
@@ -110,7 +110,8 @@ export async function findSolByNameDetail(
               .filter(
                 (line) =>
                   line.includes("SavileRowTotalTime") ||
-                  line.includes("SolverNodes")
+                  line.includes("SolverNodes")||
+                  line.includes("SolverSolutionsFound")
               )
               .map((line) => {
                 const [key, value] = line.split(":");
