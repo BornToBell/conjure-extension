@@ -14,11 +14,16 @@
   "contributes": {
     "commands": [
       {
+        "command": "conjure-model.option",
+        "title": "Option"
+      },
+      {
         "command": "conjure-model.helloWorld",
         "title": "Compare"
       }
     ]
   },
+
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",

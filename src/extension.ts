@@ -8,6 +8,7 @@ import { solve } from "./solve";
 import { multiStepInput } from "./multiStepInputs";
 import { cleanAll } from "./clean";
 import { window } from "vscode";
+import { solveOptions } from "./option"
 
 /**
  * This method is called when your extension is activated
@@ -23,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  let disposable = vscode.commands.registerCommand(
+  let disposable1 = vscode.commands.registerCommand(
     "conjure-model.helloWorld",
     async () => {
       cleanAll()
@@ -39,7 +40,26 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(disposable);
+  let disposable2 = vscode.commands.registerCommand(
+    "conjure-model.option",
+    async () => {
+      cleanAll()
+        .then((result) => multiStepInput(context)
+          .then((inputs) => {
+            solveOptions(inputs.essence, inputs.directory, inputs.params)
+            // console.log(inputs);
+
+          }))
+        .catch((error) => {
+          console.log(error);
+          window.showErrorMessage(error);
+        })
+    }
+  );
+
+
+  context.subscriptions.push(disposable1);
+  context.subscriptions.push(disposable2);
 }
 
 /**
