@@ -30,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
       cleanAll()
         .then((result) => multiStepInput(context)
           .then((inputs) => {
-            console.log(inputs);
+            console.log("Input",inputs);
             solve(inputs.essence, inputs.directory, inputs.params);
           }))
         .catch((error) => {

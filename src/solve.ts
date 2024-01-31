@@ -113,7 +113,7 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
             //create two model json files in work space
             const filePath = path.join(wf, 'original.json');
             const mod_filePath = path.join(wf, 'removed.json');
-            const outputPath = path.join(wf, '/conjure-output')
+            const outputPath = path.join(wf, 'conjure-output')
             fs.writeFileSync(filePath, essence);
             fs.writeFileSync(mod_filePath, mod_essence);
             console.log(`file created at ${wf}`);
