@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import * as path from "path";
 import { makeJSON, solveModel } from "./solve";
+import { collectSol } from "./collectSols";
 import { start } from "repl";
 
 export function solveOptions(
@@ -42,7 +43,14 @@ export function solveOptions(
         makeJSON(modelFile).then((model: any) => {
           buildModel({ model, stPos, constraints }).then((models) => {
             if (models !== null) {
-              solveAll(models[0], paramFiles, wf)
+              solveAll(models[0], paramFiles, wf, params).then((result) => {
+                const solutions = {
+                  Models: result
+                }
+                const jsonData = JSON.stringify(solutions);
+                const solPath = path.join(wf, 'options_all_solutions.json');
+                fs.writeFileSync(solPath, jsonData);
+              })
             }
           })
         });
@@ -52,17 +60,25 @@ export function solveOptions(
   });
 }
 
-async function solveAll(models: string[], paramsPathes: string[], modelPath: string) {
+async function solveAll(models: string[], paramsPathes: string[], modelPath: string, params: string[]) {
   const promises: any[] = [];
   console.log(models);
-  const jsons = models.map((model) => {return model+".json"});
-  jsons.forEach((model:string) => {
-    console.log(modelPath,model)
-    promises.push(solveModel(path.join(modelPath, model), paramsPathes, modelPath))
+  const jsons = models.map((model) => { return model + ".json" });
+  jsons.forEach((model: string) => {
+    console.log(modelPath, model)
+    const promise = new Promise((resolve, reject) => {
+      solveModel(path.join(modelPath, model), paramsPathes, modelPath).then(() => {
+        resolve(collectSol(model, modelPath, params));
+      })
+    })
+    promises.push(promise);
   })
 
-  return Promise.all(promises).then(() => {
-    return;
+
+
+  return Promise.all(promises).then((s1) => {
+    console.log(s1);
+    return s1;
   })
 }
 
