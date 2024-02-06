@@ -1,34 +1,43 @@
 import { readdir } from "fs/promises";
 // import { findByName } from "./clean";
 import * as fs from "fs";
-import * as path from "path"
+import * as path from "path";
+import { rejects } from "assert";
 
-interface solFormat {
+export interface solFormat {
   title: string;
   solutions: string[];
 }
 
-export async function collectSol(name: string, path: string, params: string[]) {
+export function collectSol(name: string, path: string, params: string[]) {
   // const files = await findSolsByName(name, path);
   // // console.log(files);
-  let trimmed = params.map((param) => {
-    return param.replace(".param", "");
-  });
-  // let solutions: any[] = [];
-  const promises: any[] = [];
-  // let data: solFormat;
-  if (params.length > 0) {
-    trimmed.forEach((param) => {
-      promises.push(findSolByNameDetail(name, path, param));
-    });
-  } else {
-    promises.push(findSolByNameDetail(name, path, ''));
-  }
 
-  return Promise.all(promises).then((result) => {
-    const data: solFormat = { title: name, solutions: result };
-    return data;
+  return new Promise((resolve, rejects) => {
+    try {
+      let trimmed = params.map((param) => {
+        return param.replace(".param", "");
+      });
+      // let solutions: any[] = [];
+      const promises: any[] = [];
+      // let data: solFormat;
+      if (params.length > 0) {
+        trimmed.forEach((param) => {
+          promises.push(findSolByNameDetail(name, path, param));
+        });
+      } else {
+        promises.push(findSolByNameDetail(name, path, ''));
+      }
+
+      resolve(Promise.all(promises).then((result) => {
+        const data: solFormat = { title: name, solutions: result };
+        return data;
+      }));
+    } catch (error) {
+      rejects(error);
+    }
   });
+
 }
 
 export const findSolsByName = async (name: string, dir: string) => {
@@ -99,7 +108,7 @@ export async function findSolByNameDetail(
       .then((files) => {
         files.forEach((file) => {
           const filePath = path.join(dir, file);
-          if (path.extname(filePath) == '.eprime-info' && file.includes(param)) {
+          if (path.extname(filePath) === '.eprime-info' && file.includes(param)) {
             let rawData = fs.readFileSync(filePath, "utf8");
             const splitedData = rawData.split("\r\n");
             // console.log('solution', jsonData)

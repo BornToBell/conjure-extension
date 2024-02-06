@@ -2,9 +2,11 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import * as path from "path";
 import { makeJSON, solveModel } from "./solve";
-import { collectSol } from "./collectSols";
+import { collectSol, solFormat } from "./collectSols";
 import { cleanConjure } from "./clean";
-import { start } from "repl";
+import { detailReportOption } from "./optionReport";
+import { promises } from "dns";
+import { rejects } from "assert";
 
 export function solveOptions(
   modelFile: string,
@@ -23,73 +25,158 @@ export function solveOptions(
     const constraints = parseEssence(data);
     if (constraints !== null) {
       const jsonOutput = {
-        Constraints: constraints.map((constraint) => (
-
-          {
-            Name: constraint.Name,
-            Group: constraint.Group,
-            Index: constraint.Index
-
-          })),
+        Constraints: constraints.map((constraint) => ({
+          Name: constraint.Name,
+          Group: constraint.Group,
+          Index: constraint.Index,
+        })),
       };
 
       const jsonString = JSON.stringify(jsonOutput, null, 2);
       if (vscode.workspace.workspaceFolders !== undefined) {
         let wf = vscode.workspace.workspaceFolders[0].uri.path;
         const filePath = path.join(wf, "Options.json");
-        fs.writeFileSync(filePath, jsonString);
+        fs.appendFileSync(filePath, jsonString);
 
-        const paramFiles: string[] = params.map(file => path.join(paramPath, file));
-
+        const paramFiles: string[] = params.map((file) =>
+          path.join(paramPath, file)
+        );
+        const solPath = path.join(wf, "options_all_solutions.json");
         makeJSON(modelFile).then((model: any) => {
-          buildModel({ model, stPos, constraints }).then((models) => {
+          // const jsonName = modelFile.replace('.essence','')+'.json';
+          const modelPath = path.join(wf, 'Model.json');
+          fs.writeFileSync(modelPath, model);
+          buildModel({ model, stPos, constraints }).then(async (models) => {
             if (models !== null) {
-              solveAll(models[0], paramFiles, wf, params).then((result) => {
-                const solutions = {
-                  Models: result
-                }
-                const jsonData = JSON.stringify(solutions);
-                const solPath = path.join(wf, 'options_all_solutions.json');
-                fs.writeFileSync(solPath, jsonData);
-              })
+              solveAll(models[0], paramFiles, wf, params)
+                .then((results) => {
+                  const outputData = {
+                    Models: results,
+                  };
+                  console.log("Results", results);
+                  const jsonData = JSON.stringify(outputData);
+                  // return fs.writeFileSync(solPath, jsonData);
+
+                  fs.writeFileSync(solPath, jsonData);
+                  // detailReportOption(wf, solPath);
+                })
+                .then(() => {
+                  detailReportOption(wf, solPath);
+                })
+                .then(() => {
+                  console.log("Finished");
+                  vscode.window.showInformationMessage("Finished Options Command");
+                });
             }
-          })
+          });
         });
       }
-
     }
   });
 }
 
-async function solveAll(models: string[], paramsPathes: string[], modelPath: string, params: string[]) {
-  const promises: any[] = [];
-  console.log("Models",models);
-  // const jsons = models.map((model) => { return model + ".json" });
-  models.forEach((model: string) => {
-    // console.log(modelPath, model)
-    const promise = new Promise((resolve, reject) => {
-      const jsonPath = model+'.json';
-      cleanConjure();
-      const outPutPath = path.join(modelPath,'conjure-output');
-      solveModel(path.join(modelPath, jsonPath), paramsPathes, modelPath).then(() => {
-        resolve(collectSol(model, outPutPath, params));
-      })
-    })
-    promises.push(promise);
-  })
+async function solveAll(
+  models: string[],
+  paramsFiles: string[],
+  modelPath: string,
+  params: string[]
+): Promise<any[]> {
+  const results: any[] = [];
+  for (const model of models) {
+    const result = await solveOne(model, paramsFiles, modelPath, params);
+    results.push(result);
+  }
+  return results;
+  // const promises: Promise<any>[] = models.map((model) => {
+  //   return
+  // });
 
-
-
-  return Promise.all(promises).then((s1) => {
-    console.log(s1);
-    return s1;
-  })
+  // try {
+  //   const results = await Promise.all(promises);
+  //   return results;
+  // } catch (error) {
+  //   throw error;
+  // }
 }
 
+// function solveAll(
+//   models: string[],
+//   paramFiles: string[],
+//   modelPath: string,
+//   params: string[]
+// ) {
+//   const promises: any[] = [];
+//   return new Promise(async (resolve, rejects) => {
+//     try {
+//       models.map((model: any) => {
+//         promises.push(solveOne(model, paramFiles, modelPath, params));
+//         // const rs = await ;
+//         // console.log("result", rs);
+//         // return rs;
+//       });
+//       // console.log("results", results);
 
-async function buildModel({ model, stPos, constraints }: { model: string; stPos: STPos; constraints: Constraint[]; }) {
+//       syncProcess(promises).then((results) => resolve(results));
+//     } catch (error) {
+//       rejects(error);
+//     }
+//   });
+// }
+
+async function syncProcess(promises: (() => Promise<any>)[]): Promise<any[]> {
+  const results: any[] = [];
+  for (const promiseFn of promises) {
+    const result = await promiseFn();
+    results.push(result);
+  }
+  return results;
+}
+
+async function solveOne(
+  model: string,
+  paramsPathes: string[],
+  modelPath: string,
+  params: string[]
+) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const jsonPath = model + ".json";
+      const outPutPath = path.join(modelPath, "conjure-output");
+
+      // cleanConjure 関数を実行して待機
+      const cleanResult = await cleanConjure();
+      console.log("Clean", model, cleanResult);
+
+      // solveModel 関数を実行して待機
+      const solveResult = await solveModel(
+        path.join(modelPath, jsonPath),
+        paramsPathes,
+        modelPath
+      );
+      console.log("Solve", model, "\n", solveResult);
+
+      // collectSol 関数を実行して待機し、その結果を変数に格納
+      const collectResult = await collectSol(model, outPutPath, params);
+
+      // collectSol の結果を resolve
+      resolve(collectResult);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function buildModel({
+  model,
+  stPos,
+  constraints,
+}: {
+  model: string;
+  stPos: STPos;
+  constraints: Constraint[];
+}) {
   try {
-    console.log("Create models");
+    // console.log("Create models");
     var inputData = JSON.parse(model);
     var models: any[] = [];
     const statements = inputData.mStatements;
@@ -99,7 +186,8 @@ async function buildModel({ model, stPos, constraints }: { model: string; stPos:
         stmt.SuchThat ? index : null
       )
       .filter((val: null) => val !== null);
-    const estimatedST = stPos.afterEndOption + stPos.beforeStartOption + stPos.betweenStartAndEnd;
+    const estimatedST =
+      stPos.afterEndOption + stPos.beforeStartOption + stPos.betweenStartAndEnd;
     if (suchThatKeys.length !== estimatedST) {
       console.error(estimatedST, suchThatKeys, suchThatKeys.length);
       throw new Error("Invalid format: Invalid number of such that");
@@ -117,30 +205,38 @@ async function buildModel({ model, stPos, constraints }: { model: string; stPos:
     const baseCos = beforeOption.concat(afterOption);
     const group: Map<string, number[]> = createMap(constraints);
     const combinations: number[][] = generateCombinations(group);
-
+    console.log('combinations',combinations);
     const promises: any[] = [];
     combinations.forEach((combi) => {
-      promises.push(writeModel(constraints, inputData, baseCos, statements, combi, startOp))
-    })
+      promises.push(
+        writeModel(constraints, inputData, baseCos, statements, combi, startOp)
+      );
+    });
 
     return Promise.all(promises).then((result) => {
       models.push(result);
       return models;
-    })
+    });
   } catch (error) {
     console.error(error);
     return null;
   }
 
-  async function writeModel(constraints: Constraint[], inputData: any, baseCos: any[], statements: any[], combi: number[], startOp: number) {
-    const state = baseCos;
-    for (let j = 0; j++; j < combi.length) {
-      state.push(statements[startOp + combi[j]])
-    }
+  async function writeModel(
+    constraints: Constraint[],
+    inputData: any,
+    baseCos: any[],
+    statements: any[],
+    combi: number[],
+    startOp: number
+  ) {
+    const state = baseCos.concat(combi.map((st) => {
+      return statements[startOp + st];
+    }));
     const model = {
       ...inputData,
       mStatements: state,
-    }
+    };
     const json = JSON.stringify(model);
     var fileName: string = constraints[combi[0]].Name;
     if (vscode.workspace.workspaceFolders !== undefined) {
@@ -149,7 +245,7 @@ async function buildModel({ model, stPos, constraints }: { model: string; stPos:
       for (let i = 1; i < combi.length; i++) {
         fileName = fileName + "_" + constraints[combi[i]].Name;
       }
-      const filePath = fileName + '.json';
+      const filePath = fileName + ".json";
       const fullPath = path.join(wf, filePath);
       fs.writeFileSync(fullPath, json);
     }
@@ -178,14 +274,15 @@ function countSuchThat(essence: string): STPos | null {
       essence.slice(0, startOptionIndex).match(/such that/g) || [];
     const betweenSuchThat =
       essence.slice(startOptionIndex, endOptionIndex).match(/such that/g) || [];
-    const afterSuchThat = essence.slice(endOptionIndex).match(/such that/g) || [];
+    const afterSuchThat =
+      essence.slice(endOptionIndex).match(/such that/g) || [];
 
     const result = {
       beforeStartOption: startSuchThat.length,
       betweenStartAndEnd: betweenSuchThat.length,
       afterEndOption: afterSuchThat.length,
     };
-    console.log("such that ", result);
+    // console.log("such that ", result);
     return result;
   } catch (error: any) {
     console.error(error.message);
@@ -196,7 +293,7 @@ function countSuchThat(essence: string): STPos | null {
 interface Constraint {
   Name: string;
   Group: string;
-  Index: number
+  Index: number;
 }
 
 interface STPos {
@@ -249,7 +346,12 @@ function parseEssence(essence: string): Constraint[] | null {
         if (!name) {
           throw new Error("Invalid format: Name is missing");
         }
-        currentConstraint = { Name: name, Group: "", Description: null, Index: -1 };
+        currentConstraint = {
+          Name: name,
+          Group: "",
+          Description: null,
+          Index: -1,
+        };
       } else if (groupMatch && currentConstraint) {
         const group = groupMatch[1].trim();
         if (!group) {
@@ -301,12 +403,11 @@ function createMap(options: Constraint[]) {
     if (group.has(options[i].Group)) {
       const member = group.get(options[i].Group);
       member.push(options[i].Index);
-      group.set(options[i].Group, member)
+      group.set(options[i].Group, member);
     } else {
-      const member: number[] = [options[i].Index]
-      group.set(options[i].Group, member)
+      const member: number[] = [options[i].Index];
+      group.set(options[i].Group, member);
     }
-  };
+  }
   return group;
-
 }

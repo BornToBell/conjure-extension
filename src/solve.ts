@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import { collectSol } from "./collectSols";
 import { detailReport, simpleReport } from "./report";
 import { cleanConjure } from "./clean";
+import * as child_process from 'child_process';
 
 export async function solve(modelFile: string, paramPath: string, paramFiles: string[]) {
     // Get the arguments passed to the "Compare" command
@@ -113,7 +114,7 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
             //create two model json files in work space
             const filePath = path.join(wf, 'original.json');
             const mod_filePath = path.join(wf, 'removed.json');
-            const outputPath = path.join(wf, 'conjure-output')
+            const outputPath = path.join(wf, 'conjure-output');
             fs.writeFileSync(filePath, essence);
             fs.writeFileSync(mod_filePath, mod_essence);
             console.log(`file created at ${wf}`);
@@ -138,11 +139,19 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
                                     };
                                     const jsonData = JSON.stringify(solutions);
                                     const solPath = path.join(wf, 'all_solutions.json');
-                                    fs.writeFileSync(solPath, jsonData);
+                                    fs.writeFile(solPath, jsonData, (error) => {
+                                        if (error) {
+                                            console.error(`Error writing file ${solPath} : `, error);
+                                        } else {
+                                            console.log(`File ${solPath} written succcesfully.`);
+                                        }
+                                        simpleReport(wf, solPath);
+                                        detailReport(wf, solPath);
+                                    });
+
                                 });
-                        })
+                        });
                 })
-                .then(() => { simpleReport(wf); detailReport(wf)})
                 .then(() => { vscode.window.showInformationMessage('Finished'); });
 
 
@@ -164,28 +173,34 @@ export async function runConjureSolve(essence: any, mod_essence: any, fileNames:
  * @param solPath workspace path
  * @returns console
  */
-export async function solveModel(essencePath: string, paramsPath: string[], solPath: string) {
-    const { exec } = require("node:child_process");
-    const joined = paramsPath.join(' ');
-    const outDir = solPath + '/conjure-output';
-    const command = `conjure solve --output-format=json --output-directory=${outDir} ${essencePath} ${joined}`;
-    console.log(`Running conjure solve: ${command}`);
-    const JSONPromise = new Promise((resolve, reject) => {
-        exec(command, (err: any, output: any) => {
-            // once the command has completed, the callback function is called
-            if (err) {
-                // log and return if we encounter an error
-                console.error("could not execute command: ", err);
-                reject(err);
-            }
-            // log the output received from the command
-            // console.log("SolveModel ",output.toString());
+export function solveModel(essencePath: string, paramsPath: string[], solPath: string) {
+    return new Promise((resolve, reject) => {
+        try {
+            const { exec } = require("node:child_process");
+            const joined = paramsPath.join(' ');
+            const outDir = path.join(solPath, 'conjure-output');
+            // fs.mkdirSync(outDir);
+            const command = `conjure solve --output-format=json --output-directory=${outDir} ${essencePath} ${joined}`;
+            // console.log(`Running conjure solve: ${command}`);
+            const result = child_process.execSync(command);
+            resolve(result.toString());
+            // exec(command, (output:any) => {
+            //     // // once the command has completed, the callback function is called
+            //     // if (err) {
+            //     //     // log and return if we encounter an error
+            //     //     console.error("could not execute command: ", err);
+            //     //     reject(err);
+            //     // }
+            //     // // log the output received from the command
+            //     // // console.log("SolveModel ",output.toString());
 
-            resolve(output.toString());
-        });
+            //     resolve(output.toString());
+            // });
+        } catch (error) {
+            reject(error);
+        }
+
     });
-
-    return JSONPromise;
 }
 
 /**

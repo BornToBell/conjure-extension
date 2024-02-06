@@ -6,10 +6,11 @@ import * as path from "path";
 import { machine } from "os";
 import { resolve } from "path";
 import { error } from "console";
+import { rejects } from "assert";
 
 
 export async function cleanAll() {
-    return await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         const path: undefined | string = workspace.rootPath;
         if (path === undefined) {
             const message = 'Open the folder containing the essence file.';
@@ -25,7 +26,7 @@ export async function cleanAll() {
 
             promises.push(deleteFilesExt('.json', path));
             promises.push(deleteFilesExt('.solution', path));
-            promises.push(deleteDir('conjure-output',path));
+            promises.push(deleteDir('conjure-output', path));
             Promise.all(promises).then(result => {
                 window.showInformationMessage('Cleaned workspace');
                 resolve(new Error("Cleaned workspace"));
@@ -37,18 +38,18 @@ export async function cleanAll() {
     });
 }
 
-export async function cleanConjure() {
-    return await new Promise((resolve, reject) => {
+export function cleanConjure() {
+    return new Promise((resolve, reject) => {
         const path: undefined | string = workspace.rootPath;
         if (path === undefined) {
             const message = 'Open the folder containing the essence file.';
             reject(message);
         } else {
             const promises: any[] = [];
-            promises.push(deleteDir('conjure-output',path));
+            promises.push(deleteDir('conjure-output', path));
             Promise.all(promises).then(result => {
                 window.showInformationMessage('Cleaned workspace');
-                resolve(new Error("Cleaned workspace"));
+                resolve(result);
             }).catch((error) => {
                 console.log(error);
             });
@@ -76,15 +77,21 @@ async function execCommand(command: string) {
     });
 }
 
-async function deleteDir(dir: string, dirPath: string) {
-    const fullPath = path.join(dirPath,dir);
-    fs.rm(fullPath, { recursive: true, force: true }, (err:any) => {
-        if (err) {
-            // File deletion failed 
-            console.error(err.message);
-            return;
+function deleteDir(dir: string, dirPath: string) {
+
+    return new Promise((resolve, rejects) => {
+        try {
+            const fullPath = path.join(dirPath, dir);
+            if (!fs.existsSync(fullPath)) {
+                resolve("Already deleted");
+            } else {
+                fs.rmdirSync(fullPath, { recursive: true });
+                resolve("Suncess deletion");
+            }
+
+        } catch (error) {
+            rejects(error);
         }
-        console.log(`${fullPath} was deleted`);
     });
 }
 
@@ -115,8 +122,8 @@ export const findByExt = async (ext: string, dir: string) => {
     const files = fs.readdirSync(dir);
     for (const file of files) {
         // Method 1:
-        const filePath = path.join(dir,file);
-        if(fs.statSync(filePath).isFile()&& path.extname(filePath)=== ext){
+        const filePath = path.join(dir, file);
+        if (fs.statSync(filePath).isFile() && path.extname(filePath) === ext) {
             matchedFiles.push(filePath);
         }
     }
