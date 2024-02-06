@@ -1,5 +1,5 @@
 import { readdir } from "fs/promises";
-import { findByName } from "./clean";
+// import { findByName } from "./clean";
 import * as fs from "fs";
 import { resolve } from "path";
 
