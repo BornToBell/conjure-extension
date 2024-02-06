@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { makeJSON, solveModel } from "./solve";
 import { collectSol } from "./collectSols";
+import { cleanConjure } from "./clean";
 import { start } from "repl";
 
 export function solveOptions(
@@ -62,13 +63,16 @@ export function solveOptions(
 
 async function solveAll(models: string[], paramsPathes: string[], modelPath: string, params: string[]) {
   const promises: any[] = [];
-  console.log(models);
-  const jsons = models.map((model) => { return model + ".json" });
-  jsons.forEach((model: string) => {
-    console.log(modelPath, model)
+  console.log("Models",models);
+  // const jsons = models.map((model) => { return model + ".json" });
+  models.forEach((model: string) => {
+    // console.log(modelPath, model)
     const promise = new Promise((resolve, reject) => {
-      solveModel(path.join(modelPath, model), paramsPathes, modelPath).then(() => {
-        resolve(collectSol(model, modelPath, params));
+      const jsonPath = model+'.json';
+      cleanConjure();
+      const outPutPath = path.join(modelPath,'conjure-output');
+      solveModel(path.join(modelPath, jsonPath), paramsPathes, modelPath).then(() => {
+        resolve(collectSol(model, outPutPath, params));
       })
     })
     promises.push(promise);
