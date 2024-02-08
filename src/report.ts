@@ -81,6 +81,7 @@ export async function detailReport(dir: string, solPath: string) {
     array = array.concat(additional);
   }
   const result = {
+    Mode:"Compare",
     Difference: array,
   };
 
@@ -129,7 +130,7 @@ export function notEmpty(sol: Solution) {
   );
   if (numInfo !== undefined && numInfo.SolverSolutionsFound !== undefined) {
     return numInfo.SolverSolutionsFound > 0;
-  } else return false;
+  } else {return false;}
 }
 
 export function findNodes(sol: Solution): number {
@@ -139,7 +140,7 @@ export function findNodes(sol: Solution): number {
   );
   if (numInfo !== undefined && numInfo.SolverNodes !== undefined) {
     return numInfo.SolverNodes;
-  } else return 0;
+  } else {return 0;}
 }
 export function countTime(model: Model): number {
   return model.solutions.reduce(
@@ -155,7 +156,7 @@ function findTime(sol: Solution): number {
   );
   if (numInfo !== undefined && numInfo.SavileRowTotalTime !== undefined) {
     return numInfo.SavileRowTotalTime;
-  } else return 0;
+  } else {return 0;}
 }
 export function countNodes(model: Model): number {
   return model.solutions.reduce(

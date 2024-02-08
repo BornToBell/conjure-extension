@@ -8,69 +8,76 @@ import { detailReportOption } from "./optionReport";
 import { promises } from "dns";
 import { rejects } from "assert";
 
-export function solveOptions(
+export async function solveOptions(
   modelFile: string,
   paramPath: string,
   params: string[]
 ) {
-  fs.readFile(modelFile, "utf-8", (err, data) => {
-    if (err) {
-      console.error("Error reading file", err);
-      return;
-    }
-    const stPos: STPos | null = countSuchThat(data);
-    if (stPos === null) {
-      return;
-    }
-    const constraints = parseEssence(data);
-    if (constraints !== null) {
-      const jsonOutput = {
-        Constraints: constraints.map((constraint) => ({
-          Name: constraint.Name,
-          Group: constraint.Group,
-          Index: constraint.Index,
-        })),
-      };
+  return new Promise((resolve, rejects) => {
+    try {
+      fs.readFile(modelFile, "utf-8", (err, data) => {
+        if (err) {
+          console.error("Error reading file", err);
+          return;
+        }
+        const stPos: STPos | null = countSuchThat(data);
+        if (stPos === null) {
+          return;
+        }
+        const constraints = parseEssence(data);
+        if (constraints !== null) {
+          const jsonOutput = {
+            Constraints: constraints.map((constraint) => ({
+              Name: constraint.Name,
+              Group: constraint.Group,
+              Index: constraint.Index,
+            })),
+          };
 
-      const jsonString = JSON.stringify(jsonOutput, null, 2);
-      if (vscode.workspace.workspaceFolders !== undefined) {
-        let wf = vscode.workspace.workspaceFolders[0].uri.path;
-        const filePath = path.join(wf, "Options.json");
-        fs.appendFileSync(filePath, jsonString);
+          const jsonString = JSON.stringify(jsonOutput, null, 2);
+          if (vscode.workspace.workspaceFolders !== undefined) {
+            let wf = vscode.workspace.workspaceFolders[0].uri.path;
+            const filePath = path.join(wf, "Options.json");
+            fs.appendFileSync(filePath, jsonString);
 
-        const paramFiles: string[] = params.map((file) =>
-          path.join(paramPath, file)
-        );
-        const solPath = path.join(wf, "options_all_solutions.json");
-        makeJSON(modelFile).then((model: any) => {
-          // const jsonName = modelFile.replace('.essence','')+'.json';
-          const modelPath = path.join(wf, 'Model.json');
-          fs.writeFileSync(modelPath, model);
-          buildModel({ model, stPos, constraints }).then(async (models) => {
-            if (models !== null) {
-              solveAll(models[0], paramFiles, wf, params)
-                .then((results) => {
-                  const outputData = {
-                    Models: results,
-                  };
-                  console.log("Results", results);
-                  const jsonData = JSON.stringify(outputData);
-                  // return fs.writeFileSync(solPath, jsonData);
+            const paramFiles: string[] = params.map((file) =>
+              path.join(paramPath, file)
+            );
+            const solPath = path.join(wf, "options_all_solutions.json");
+            makeJSON(modelFile).then((model: any) => {
+              // const jsonName = modelFile.replace('.essence','')+'.json';
+              const modelPath = path.join(wf, "Model.json");
+              fs.writeFileSync(modelPath, model);
+              buildModel({ model, stPos, constraints }).then(async (models) => {
+                if (models !== null) {
+                  solveAll(models[0], paramFiles, wf, params)
+                    .then((results) => {
+                      const outputData = {
+                        Models: results,
+                      };
+                      console.log("Results", results);
+                      const jsonData = JSON.stringify(outputData);
+                      // return fs.writeFileSync(solPath, jsonData);
 
-                  fs.writeFileSync(solPath, jsonData);
-                  // detailReportOption(wf, solPath);
-                })
-                .then(() => {
-                  detailReportOption(wf, solPath);
-                })
-                .then(() => {
-                  console.log("Finished");
-                  vscode.window.showInformationMessage("Finished Options Command");
-                });
-            }
-          });
-        });
-      }
+                      fs.writeFileSync(solPath, jsonData);
+                      // detailReportOption(wf, solPath);
+                    })
+                    .then(() => {
+                      detailReportOption(wf, solPath,"Option").then((res) => {
+                        resolve("Finish option process");
+                        vscode.window.showInformationMessage(
+                          "Finished Options Command"
+                        );
+                      });
+                    });
+                }
+              });
+            });
+          }
+        }
+      });
+    } catch (error) {
+      rejects(error);
     }
   });
 }
@@ -205,7 +212,7 @@ async function buildModel({
     const baseCos = beforeOption.concat(afterOption);
     const group: Map<string, number[]> = createMap(constraints);
     const combinations: number[][] = generateCombinations(group);
-    console.log('combinations',combinations);
+    console.log("combinations", combinations);
     const promises: any[] = [];
     combinations.forEach((combi) => {
       promises.push(
@@ -230,9 +237,11 @@ async function buildModel({
     combi: number[],
     startOp: number
   ) {
-    const state = baseCos.concat(combi.map((st) => {
-      return statements[startOp + st];
-    }));
+    const state = baseCos.concat(
+      combi.map((st) => {
+        return statements[startOp + st];
+      })
+    );
     const model = {
       ...inputData,
       mStatements: state,
