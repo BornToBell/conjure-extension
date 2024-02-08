@@ -83,6 +83,9 @@ export async function activate(context: vscode.ExtensionContext) {
       solveOptions(inputs.essence, inputs.directory, inputs.params).then(
         async (res) => {
           console.log(res);
+          /**
+           * This code is cited from https://code.visualstudio.com/api/extension-guides/webview
+           */
           const panel = vscode.window.createWebviewPanel(
             "ReportOption",
             "Options report",
@@ -92,17 +95,6 @@ export async function activate(context: vscode.ExtensionContext) {
             }
           );
 
-          // const libPath = vscode.Uri.file(
-          //   path.join(
-          //     context.extensionPath,
-          //     "node_modules",
-          //     "chart.js",
-          //     "dist",
-          //     "chart.js"
-          //   )
-          // );
-
-          // const scriptUri = panel.webview.asWebviewUri(libPath);
           if (undefined !== vscode.workspace.workspaceFolders) {
             const wf = vscode.workspace.workspaceFolders[0].uri.path;
             const reportPath = path.join(wf, "detailed_report.json");
@@ -116,6 +108,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
             updateWebview();
             console.log("update");
+            /**
+             * End of citation
+             */
+            
           }
         }
       );

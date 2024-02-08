@@ -1,5 +1,8 @@
 import * as vscode from "vscode";
 
+/**
+ * This code is cited from https://qiita.com/mahoutsukaino-deshi/items/e609eb1cdda2c333b6ac#chartjs%E3%82%92%E4%BD%BF%E3%81%A3%E3%81%A6%E3%81%BF%E3%82%8B
+ */
 export function graphicalReport(data: string[]) {
   const solutionsText = data[0].replace(/\n/g, "<br>");
   console.log(data);
@@ -25,3 +28,6 @@ export function graphicalReport(data: string[]) {
     </body>
     </html>`;
 }
+/** 
+ * End of citation
+*/
