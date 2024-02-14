@@ -1,4 +1,4 @@
-// import { time } from "console";
+
 import * as fs from "fs";
 import path from "path";
 
@@ -42,9 +42,6 @@ interface Solutions {
   }
 }
 
-interface solModels {
-  Model: solModel[]
-}
 interface solModel {
   title: string,
   solutions: Parameter[]
@@ -89,13 +86,6 @@ export async function createChart(
         };
       });
       const allSolUri = path.join(dir, 'all_solutions.json');
-      // const data2 = JSON.parse(fs.readFileSync(reportUri, "utf-8"));
-      // var params = [];
-      // if (data2.Models[0].solutions.length == 1) {
-      //   params.push("No parameter")
-      // } else {
-      //   data2.Models[0].solutions.forEach((param: Parameter) => params.push(param.parameter));
-      // }
       const solChart = createSolChart(allSolUri, report.Difference[0].Solutions.All_solved.Models);
       const txt = createTxt(report.Difference[0]);
 
@@ -115,11 +105,6 @@ export async function createChart(
     }
   });
 }
-interface Data {
-  x: string,
-  y: number
-}
-
 //cited from https://www.chartjs.org/docs/latest/samples/utils.html
 const CHART_COLORS = {
   red: 'rgb(255, 99, 132)',
@@ -185,10 +170,6 @@ export function createSolChart(allSolUri: string, models: string[]) {
 }
 
 function createData(params: Parameter[], time: boolean) {
-  // return params.map((param:Parameter) => {
-  //   if(time) return  {x:param.parameter,y:param.information[1].SavileRowTotalTime}
-  //   else return {x:param.parameter,y:params[0].information[2].SolverNodes}
-  // });
   var data = [];
   if (params.length === 1) {
     var y = 0;
@@ -325,7 +306,6 @@ function createTxt(solutions: Solutions) {
   const allResolvedCountText = `The number of all resolved models is ${aSolved} out of ${total}.\n`;
   const partiallyResolvedCountText = `The number of partially solved models is ${pSolved} out of ${total}.\n`;
   const notResolvedCountText = `The number of models not solved at all is ${nSolved} out of ${total}.\n\n`;
-
 
   return allResolvedText + partiallyResolvedText + notResolvedText + allResolvedCountText + partiallyResolvedCountText + notResolvedCountText;
 }

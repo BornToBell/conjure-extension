@@ -1,100 +1,95 @@
-import fs from "fs";
-import * as path from "path";
+// import fs from "fs";
+// import * as path from "path";
 
-export async function simpleReport(dir: string, solPath: string) {
-  // const fullPath = path.join(dir, solName);
-  fs.readFile(solPath, "utf-8", (error) => {
-    if (error) {
-      console.error(`Error reading file ${solPath} : `, error);
-    } else {
-      var data = JSON.parse(fs.readFileSync(solPath, "utf-8"));
-      // console.log(data);
+// export async function simpleReport(dir: string, solPath: string) {
+//   // const fullPath = path.join(dir, solName);
+//   fs.readFile(solPath, "utf-8", (error) => {
+//     if (error) {
+//       console.error(`Error reading file ${solPath} : `, error);
+//     } else {
+//       var data = JSON.parse(fs.readFileSync(solPath, "utf-8"));
+//       // console.log(data);
 
-      const paramFile = findParams(data.Models[0]);
-      const originalParam = findNonEmptySolutions(data.Models[0]);
-      const removedCount = findNonEmptySolutions(data.Models[1]);
-      // console.log(originalParam, removedCount);
-      const uniqueToOriginal = removedCount.filter(
-        (file) => !originalParam.includes(file)
-      );
-      // console.log(originalParam, removedCount);
-      const diff = {
-        Difference: [
-          { Both: removedCount.length - uniqueToOriginal.length },
-          { Neither: paramFile.length - removedCount.length },
-          {
-            Either: [
-              { Count: uniqueToOriginal.length },
-              { Name: uniqueToOriginal },
-            ],
-          },
-        ],
-      };
+//       const paramFile = findParams(data.Models[0]);
+//       const originalParam = findNonEmptySolutions(data.Models[0]);
+//       const removedCount = findNonEmptySolutions(data.Models[1]);
+//       // console.log(originalParam, removedCount);
+//       const uniqueToOriginal = removedCount.filter(
+//         (file) => !originalParam.includes(file)
+//       );
+//       // console.log(originalParam, removedCount);
+//       const diff = {
+//         Difference: [
+//           { Both: removedCount.length - uniqueToOriginal.length },
+//           { Neither: paramFile.length - removedCount.length },
+//           {
+//             Either: [
+//               { Count: uniqueToOriginal.length },
+//               { Name: uniqueToOriginal },
+//             ],
+//           },
+//         ],
+//       };
 
-      const jsonData = JSON.stringify(diff);
+//       const jsonData = JSON.stringify(diff);
 
-      const diffPath = path.join(dir, "simple_report.json");
-      fs.writeFileSync(diffPath, jsonData);
-    }
-  });
-}
+//       const diffPath = path.join(dir, "simple_report.json");
+//       fs.writeFileSync(diffPath, jsonData);
+//     }
+//   });
+// }
 
-export async function detailReport(dir: string, solPath: string) {
-  var data = JSON.parse(fs.readFileSync(solPath, "utf-8"));
-  // console.log(data);
-  // // const count = data.Models.reduce((total, model) => {
-  // //     const solutionsWithParameter = model.solutions.filter(solution => solution.parameter);
-  // //     return total + solutionsWithParameter.length;
-  // //   }, 0);
-  const paramFile = findParams(data.Models[0]);
-  const originalParam = findNonEmptySolutions(data.Models[0]);
-  const removedCount = findNonEmptySolutions(data.Models[1]);
+// export async function detailReport(dir: string, solPath: string) {
+//   var data = JSON.parse(fs.readFileSync(solPath, "utf-8"));
+//   // console.log(data);
+//   // // const count = data.Models.reduce((total, model) => {
+//   // //     const solutionsWithParameter = model.solutions.filter(solution => solution.parameter);
+//   // //     return total + solutionsWithParameter.length;
+//   // //   }, 0);
+//   const paramFile = findParams(data.Models[0]);
+//   const originalParam = findNonEmptySolutions(data.Models[0]);
+//   const removedCount = findNonEmptySolutions(data.Models[1]);
 
-  const originalNodes = countNodes(data.Models[0]);
-  const removedNodes = countNodes(data.Models[1]);
+//   const originalNodes = countNodes(data.Models[0]);
+//   const removedNodes = countNodes(data.Models[1]);
 
-  const originalTime = countTime(data.Models[0]);
-  const removedTime = countTime(data.Models[1]);
-  const uniqueToOriginal = removedCount.filter(
-    (file) => !originalParam.includes(file)
-  );
-  var array = [{
-    Both: removedCount.length - uniqueToOriginal.length,
-    Neither: paramFile.length - removedCount.length,
-    Either: [{ Count: uniqueToOriginal.length , Name: uniqueToOriginal }]
-  }];
+//   const originalTime = countTime(data.Models[0]);
+//   const removedTime = countTime(data.Models[1]);
+//   const uniqueToOriginal = removedCount.filter(
+//     (file) => !originalParam.includes(file)
+//   );
+//   var array = [{
+//     Both: removedCount.length - uniqueToOriginal.length,
+//     Neither: paramFile.length - removedCount.length,
+//     Either: [{ Count: uniqueToOriginal.length , Name: uniqueToOriginal }]
+//   }];
 
-  const additional:any[] = [
-    {
-      Model: "Original",
-      Average_Nodes: originalNodes / paramFile.length,
-      Average_Time: originalTime / paramFile.length
-    },
-    {
-        Model:"Removed",
-        Average_Nodes: removedNodes / paramFile.length,
-        Average_Time: removedTime / paramFile.length
-    }
-  ];
+//   const additional:any[] = [
+//     {
+//       Model: "Original",
+//       Average_Nodes: originalNodes / paramFile.length,
+//       Average_Time: originalTime / paramFile.length
+//     },
+//     {
+//         Model:"Removed",
+//         Average_Nodes: removedNodes / paramFile.length,
+//         Average_Time: removedTime / paramFile.length
+//     }
+//   ];
 
-  if (uniqueToOriginal.length === 0) {
-    array = array.concat(additional);
-  }
-  const result = {
-    Mode:"Compare",
-    Difference: array,
-  };
+//   if (uniqueToOriginal.length === 0) {
+//     array = array.concat(additional);
+//   }
+//   const result = {
+//     Mode:"Compare",
+//     Difference: array,
+//   };
 
-  const jsonData = JSON.stringify(result);
-  const diffPath = path.join(dir, "detailed_report.json");
-  fs.writeFileSync(diffPath, jsonData);
-}
+//   const jsonData = JSON.stringify(result);
+//   const diffPath = path.join(dir, "detailed_report.json");
+//   fs.writeFileSync(diffPath, jsonData);
+// }
 
-function makeModel(model: string, params: number, sols: number) {
-  return {
-    model: [{ "having solution(s)": sols }, { "no solution": params - sols }],
-  };
-}
 
 interface Information {
   solution?: Record<string, number> | string;
@@ -113,9 +108,9 @@ export interface Model {
   solutions: Solution[];
 }
 
-interface Data {
-  Models: Model[];
-}
+// interface Data {
+//   Models: Model[];
+// }
 
 export function findNonEmptySolutions(model: Model): string[] {
   return model.solutions
@@ -144,7 +139,7 @@ export function findNodes(sol: Solution): number {
 }
 export function countTime(model: Model): number {
   return model.solutions.reduce(
-    (accumlator, current) => accumlator + findTime(current),
+    (accumulator, current) => accumulator + findTime(current),
     0
   );
 }
@@ -160,7 +155,7 @@ function findTime(sol: Solution): number {
 }
 export function countNodes(model: Model): number {
   return model.solutions.reduce(
-    (accumlator, current) => accumlator + findNodes(current),
+    (accumulator, current) => accumulator + findNodes(current),
     0
   );
 }

@@ -5,25 +5,12 @@
 
 import { workspace, QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, Uri, WorkspaceFolder, QuickPickOptions, } from 'vscode';
 import * as fs from 'fs';
-import { resolve } from 'path';
 /**
  * A multi-step input using window.createQuickPick() and window.createInputBox().
  * 
  * This first part uses the helper class `MultiStepInput` that wraps the API for the multi-step case.
  */
 export async function multiStepInput(context: ExtensionContext) {
-
-    // class MyButton implements QuickInputButton {
-    //     constructor(public iconPath: { light: Uri; dark: Uri; }, public tooltip: string) { }
-    // }
-
-    // const createResourceGroupButton = new MyButton({
-    //     dark: Uri.file(context.asAbsolutePath('resources/dark/add.svg')),
-    //     light: Uri.file(context.asAbsolutePath('resources/light/add.svg')),
-    // }, 'Create Resource Group');
-
-
-
 
     interface State {
         title: string;

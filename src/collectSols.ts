@@ -1,8 +1,6 @@
 import { readdir } from "fs/promises";
-// import { findByName } from "./clean";
 import * as fs from "fs";
 import * as path from "path";
-import { rejects } from "assert";
 
 export interface solFormat {
   title: string;
@@ -59,7 +57,6 @@ export async function findSolByName(name: string, dir: string, param: string) {
   /* This code is taken from https://www.webmound.com/nodejs-find-files-matching-name-pattern-extension/ (last accessed 03-01-2024)*/
   /* BEGIN Copied Code */
   return await new Promise((resolve, reject) => {
-    // const path = require("path");
     readdir(dir)
       .then((files) => {
         files.forEach((file) => {
@@ -71,7 +68,6 @@ export async function findSolByName(name: string, dir: string, param: string) {
             const fullPath = dir + "/" + file;
             let rawData = fs.readFileSync(fullPath, "utf8");
             const jsonData = JSON.parse(rawData);
-            // console.log('solution', jsonData)
             const data = {
               parameter: param + ".param",
               information: [{ solution: jsonData }],

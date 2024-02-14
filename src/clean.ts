@@ -1,6 +1,5 @@
 import { workspace, Terminal } from "vscode";
 import { unlink } from "fs";
-import { readdir } from "fs/promises";
 import * as fs from "fs";
 import * as path from "path";
 import { Progress } from "./extension";

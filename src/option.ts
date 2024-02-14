@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import * as path from "path";
 import { makeJSON, solveModel } from "./solve";
-import { collectSol, solFormat } from "./collectSols";
+import { collectSol} from "./collectSols";
 import { cleanConjure } from "./clean";
 import { detailReportOption } from "./optionReport";
 import { Progress } from "./extension";
@@ -72,16 +72,6 @@ async function solveAll(
 }
 
 
-
-async function syncProcess(promises: (() => Promise<any>)[]): Promise<any[]> {
-  const results: any[] = [];
-  for (const promiseFn of promises) {
-    const result = await promiseFn();
-    results.push(result);
-  }
-  return results;
-}
-
 async function solveOne(
   model: string,
   paramsPaths: string[],
@@ -93,23 +83,14 @@ async function solveOne(
       const jsonPath = model + ".json";
       const outPutPath = path.join(modelPath, "conjure-output");
 
-      // cleanConjure 関数を実行して待機
-      const cleanResult = await cleanConjure();
-      // console.log("Clean", model, cleanResult);
-
-      // solveModel 関数を実行して待機
+      await cleanConjure();
       const solveResult = await solveModel(
         path.join(modelPath, jsonPath),
         paramsPaths,
         modelPath
       );
       Progress.appendLine(`\n`+solveResult);
-      // console.log("Solve", model, "\n", solveResult);
-
-      // collectSol 関数を実行して待機し、その結果を変数に格納
       const collectResult = await collectSol(model, outPutPath, params);
-
-      // collectSol の結果を resolve
       resolve(collectResult);
     } catch (error) {
       reject(error);
@@ -128,7 +109,6 @@ async function buildModel(
       var inputData = JSON.parse(model);
       var models: any[] = [];
       const statements = inputData.mStatements;
-      // Find the index of the last "SuchThat" key
       const suchThatKeys = inputData.mStatements
         .map((stmt: { SuchThat: any }, index: any) =>
           stmt.SuchThat ? index : null
@@ -153,7 +133,6 @@ async function buildModel(
       const baseCos = beforeOption.concat(afterOption);
       const group: Map<string, number[]> = createMap(constraints);
       const combinations: number[][] = generateCombinations(group);
-      // console.log("combinations", combinations);
       const promises: any[] = [];
       combinations.forEach((combi) => {
         promises.push(
@@ -225,7 +204,6 @@ function countSuchThat(essence: string) {
         betweenStartAndEnd: betweenSuchThat.length,
         afterEndOption: afterSuchThat.length,
       };
-      // console.log("such that ", result);
       resolve(result);
     } catch (error: any) {
       console.error(error.message);
@@ -246,28 +224,6 @@ interface STPos {
   beforeStartOption: number;
   betweenStartAndEnd: number;
 }
-
-// function parseEssence(essence: string): Constraint[] {
-//   const constraints: Constraint[] = [];
-//   let currentConstraint: Constraint | null = null;
-
-//   const lines = essence.split('\n');
-//   lines.forEach(line => {
-//     const match = line.match(/\$\$\$ Name: (.+)/);
-//     if (match) {
-//       currentConstraint = { Name: match[1].trim(), Group: "" };
-//     } else if (currentConstraint && line.includes("$$$ Group:")) {
-//       const groupMatch = line.match(/\$\$\$ Group: (.+)/);
-//       if (groupMatch) {
-//         currentConstraint.Group = groupMatch[1].trim();
-//         constraints.push({ ...currentConstraint });
-//         currentConstraint = null;
-//       }
-//     }
-//   });
-
-//   return constraints;
-// }
 
 interface Constraint {
   Name: string;
