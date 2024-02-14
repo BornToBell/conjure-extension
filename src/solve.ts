@@ -7,37 +7,34 @@ import { cleanConjure } from "./clean";
 import * as child_process from "child_process";
 import { detailReportOption } from "./optionReport";
 
+
 export async function solve(
   modelFile: string,
   paramPath: string,
-  paramFiles: string[]
+  paramFiles: string[],
+  terminal: vscode.Terminal
 ) {
-  // Get the arguments passed to the "Compare" command
-  // const fileNames = vscode.window.activeTextEditor?.document.fileName.split(' ') || [];
-  // const modelFile = await vscode.window.showInputBox({
-  //     title: "Enter essence file name",
-  // });
-  // const paramFiles = await vscode.window.showInputBox({
-  //     title: "Enter param file name(s)",
-  // });
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const params: string[] = paramFiles.map((file) => `${paramPath}/${file}`);
-
-      makeJSON(modelFile).then((model) =>
-        extractFile(model).then((mod_model) => {
-          runConjureSolve(model, mod_model, params, paramFiles).then(
-            (comparison) => {
-                resolve("Finished Compariosn process");
-            //   if (comparison) {
-            //     resolve("Same solutions");
-            //   } else {
-            //     resolve("Different solutions");
-            //   }
-            }
-          );
-        })
-      );
+      const model = await makeJSON(modelFile);
+      const mod_model = await extractFile(model);
+      await runConjureSolve(model, mod_model, params, paramFiles,terminal);
+      resolve("Finished Comparison process")
+      // makeJSON(modelFile).then((model) =>
+      //   extractFile(model).then((mod_model) => {
+      //     runConjureSolve(model, mod_model, params, paramFiles).then(
+      //       (comparison) => {
+      //         resolve("Finished Compariosn process");
+      //         //   if (comparison) {
+      //         //     resolve("Same solutions");
+      //         //   } else {
+      //         //     resolve("Different solutions");
+      //         //   }
+      //       }
+      //     );
+      //   })
+      // );
     } catch (error) {
       reject(error);
     }
@@ -50,7 +47,7 @@ export async function solve(
  * @returns json model which exclude last constraint
  */
 export async function extractFile(s: any) {
-  console.log("Modify essence file");
+  // console.log("Modify essence file");
   const fs = require("fs");
   var inputData = JSON.parse(s);
 
@@ -82,14 +79,13 @@ export async function extractFile(s: any) {
 export async function makeJSON(fileName: string) {
   const { exec } = require("node:child_process");
 
-  console.log(`Convert ${fileName} to JSON format`);
-  const JSONPromise = new Promise((resolve, reject) => {
+  // terminal.sendText(`Convert ${fileName} to JSON format`);
+  const JSONPromise = new Promise<string>((resolve, reject) => {
     const command = `conjure pretty --output-format=astjson ${fileName}`;
     exec(command, (err: any, output: any) => {
       // once the command has completed, the callback function is called
       if (err) {
         // log and return if we encounter an error
-        console.error("could not execute command: ", command, err);
         reject(err);
       } else {
         // log the output received from the command
@@ -97,7 +93,6 @@ export async function makeJSON(fileName: string) {
       }
     });
   });
-  console.log(`Finished conversion: ${fileName} to JSON format`);
   return JSONPromise;
 }
 
@@ -112,10 +107,11 @@ export async function runConjureSolve(
   essence: any,
   mod_essence: any,
   fileNames: string[],
-  params: string[]
+  params: string[],
+  terminal:vscode.Terminal
 ) {
   //cite from https://stackoverflow.com/questions/39569993/vs-code-extension-get-full-path
-  const JSONPromise = new Promise((resolve, reject) => {
+  const JSONPromise = new Promise(async(resolve, reject) => {
     if (vscode.workspace.workspaceFolders !== undefined) {
       let wf = vscode.workspace.workspaceFolders[0].uri.path;
 
@@ -128,48 +124,61 @@ export async function runConjureSolve(
       const outputPath = path.join(wf, "conjure-output");
       fs.writeFileSync(filePath, essence);
       fs.writeFileSync(mod_filePath, mod_essence);
-      console.log(`file created at ${wf}`);
-
+      const terminalMessage:string[] = [];
       //solve models
-      cleanConjure()
-        .then(() => {
-          solveModel(filePath, fileNames, wf)
-            .then((s1) => {
-              console.log("After solved Model", s1);
-              return collectSol("original", outputPath, params);
-            })
-            .then((data1) => {
-              cleanConjure();
-              solveModel(mod_filePath, fileNames, wf)
-                .then(() => {
-                  return collectSol("removed", outputPath, params);
-                })
-                .then((data2) => {
-                  const data = [data1, data2];
-                  const solutions = {
-                    Models: data,
-                  };
-                  const jsonData = JSON.stringify(solutions);
-                  const solPath = path.join(wf, "all_solutions.json");
-                  fs.writeFile(solPath, jsonData, (error) => {
-                    if (error) {
-                      console.error(`Error writing file ${solPath} : `, error);
-                    } else {
-                      console.log(`File ${solPath} written succcesfully.`);
-                    }
-                    // simpleReport(wf, solPath);
-                    resolve(detailReportOption(wf, solPath,"Compare"));
-                  });
-                });
-            });
-        })
-        .then(() => {
-          vscode.window.showInformationMessage("Finished");
-        });
+      await cleanConjure();
+      await solveModel(filePath, fileNames, wf);
+      const data1 = await collectSol("original", outputPath, params);
+      await cleanConjure();
+      await solveModel(mod_filePath, fileNames, wf);
+      const data2 = collectSol("removed", outputPath, params);
+      const data = [data1, data2];
+      const solutions = {
+        Models: data,
+      };
+      const jsonData = JSON.stringify(solutions);
+      const solPath = path.join(wf, "all_solutions.json");
+      fs.writeFileSync(solPath,jsonData);
+      await detailReportOption(wf, solPath, "Compare");
+      resolve("Finished comparison")
+      // cleanConjure()
+      //   .then(() => {
+      //     solveModel(filePath, fileNames, wf)
+      //       .then((s1: string) => {
+      //         return collectSol("original", outputPath, params);
+      //       })
+      //       .then((data1) => {
+      //         cleanConjure();
+      //         solveModel(mod_filePath, fileNames, wf)
+      //           .then(() => {
+      //             return collectSol("removed", outputPath, params);
+      //           })
+      //           .then((data2) => {
+      //             const data = [data1, data2];
+      //             const solutions = {
+      //               Models: data,
+      //             };
+      //             const jsonData = JSON.stringify(solutions);
+      //             const solPath = path.join(wf, "all_solutions.json");
+      //             fs.writeFile(solPath, jsonData, (error) => {
+      //               if (error) {
+      //                 terminal.sendText(`Error writing file ${solPath} : ${error}`);
+      //               } else {
+      //                 terminal.sendText(`File ${solPath} written successfully.`);
+      //               }
+      //               // simpleReport(wf, solPath);
+      //               resolve(detailReportOption(wf, solPath, "Compare"));
+      //             });
+      //           });
+      //       });
+      //   })
+      //   .then(() => {
+      //     vscode.window.showInformationMessage("Finished");
+      //   });
     } else {
       const message =
-        "YOUR-EXTENSION: Working folder not found, open a folder an try again";
-      console.log(message);
+        "Working Space: Working folder not found, open a folder an try again";
+      // console.log(message);
       vscode.window.showErrorMessage(message);
       reject(message);
     }
@@ -188,8 +197,8 @@ export function solveModel(
   essencePath: string,
   paramsPath: string[],
   solPath: string
-) {
-  return new Promise((resolve, reject) => {
+): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
     try {
       const { exec } = require("node:child_process");
       const joined = paramsPath.join(" ");
@@ -199,18 +208,7 @@ export function solveModel(
       // console.log(`Running conjure solve: ${command}`);
       const result = child_process.execSync(command);
       resolve(result.toString());
-      // exec(command, (output:any) => {
-      //     // // once the command has completed, the callback function is called
-      //     // if (err) {
-      //     //     // log and return if we encounter an error
-      //     //     console.error("could not execute command: ", err);
-      //     //     reject(err);
-      //     // }
-      //     // // log the output received from the command
-      //     // // console.log("SolveModel ",output.toString());
 
-      //     resolve(output.toString());
-      // });
     } catch (error) {
       reject(error);
     }

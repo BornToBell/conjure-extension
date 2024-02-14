@@ -1,12 +1,9 @@
-import { workspace, window } from "vscode";
+import { workspace, Terminal } from "vscode";
 import { unlink } from "fs";
 import { readdir } from "fs/promises";
 import * as fs from "fs";
 import * as path from "path";
-import { machine } from "os";
-import { resolve } from "path";
-import { error } from "console";
-import { rejects } from "assert";
+
 
 
 export async function cleanAll() {
@@ -17,21 +14,14 @@ export async function cleanAll() {
             reject(message);
         } else {
             const promises: any[] = [];
-            // const commands: string[] = [`rm ${path}/mode_model*`, `rm ${path}/model*`, `rm -rf ${path}/conjure-output`]
-            // commands.forEach((command) => {
-            //     promises.push(execCommand(command))
-            // })
-            // promises.push(deleteFiles('mod_model', path))
-            // const dir = path + '/conjure-output';
 
             promises.push(deleteFilesExt('.json', path));
             promises.push(deleteFilesExt('.solution', path));
             promises.push(deleteDir('conjure-output', path));
             Promise.all(promises).then(result => {
-                window.showInformationMessage('Cleaned workspace');
-                resolve(new Error("Cleaned workspace"));
+                resolve(result.join(' '));
             }).catch((error) => {
-                console.log(error);
+               console.error(error);
             });
 
         }
@@ -39,7 +29,7 @@ export async function cleanAll() {
 }
 
 export function cleanConjure() {
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
         const path: undefined | string = workspace.rootPath;
         if (path === undefined) {
             const message = 'Open the folder containing the essence file.';
@@ -47,46 +37,29 @@ export function cleanConjure() {
         } else {
             const promises: any[] = [];
             promises.push(deleteDir('conjure-output', path));
-            Promise.all(promises).then(result => {
-                window.showInformationMessage('Cleaned workspace');
-                resolve(result);
+            Promise.all(promises).then((result:string[]) => {
+                // terminal.sendText(result.join(' '));
+                resolve(result.join(' '));
             }).catch((error) => {
-                console.log(error);
+                reject(error)
+                // terminal.sendText(error);
             });
 
         }
     });
 }
 
-async function execCommand(command: string) {
-    const { exec } = require("node:child_process");
-    return await new Promise((resolve, reject) => {
-        exec(command, (err: any, output: any) => {
-            // once the command has completed, the callback function is called
-            if (err) {
-                // log and return if we encounter an error
-                console.error(err);
-                reject(err);
-            } else {
-                // log the output received from the command
-                console.log(`Success ${command}`);
-                resolve(output.toString());
-            }
-
-        });
-    });
-}
 
 function deleteDir(dir: string, dirPath: string) {
 
-    return new Promise((resolve, rejects) => {
+    return new Promise<string>((resolve, rejects) => {
         try {
             const fullPath = path.join(dirPath, dir);
             if (!fs.existsSync(fullPath)) {
                 resolve("Already deleted");
             } else {
-                fs.rmdirSync(fullPath, { recursive: true });
-                resolve("Suncess deletion");
+                fs.rmSync(fullPath, { recursive: true })
+                resolve(`${fullPath} was deleted`);
             }
 
         } catch (error) {
@@ -97,19 +70,20 @@ function deleteDir(dir: string, dirPath: string) {
 
 async function deleteFilesExt(ext: string, dir: string) {
     const files = await findByExt(ext, dir);
-    // console.log(files);
+    const deleted:string[] = [];
     if (files.length > 0) {
         files.forEach((file) => {
-            // const fullPath = dir + '/' + file;
             unlink(file, (err) => {
                 if (err) {
                     // File deletion failed 
                     console.error(err.message);
                     return;
                 }
-                console.log(`${file} was deleted`);
+                deleted.push(`${file} was deleted`);
             });
         });
+
+        return deleted;
     }
 
 }

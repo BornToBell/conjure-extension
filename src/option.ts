@@ -43,7 +43,7 @@ export async function solveOptions(
             const paramFiles: string[] = params.map((file) =>
               path.join(paramPath, file)
             );
-            const solPath = path.join(wf, "options_all_solutions.json");
+            const solPath = path.join(wf, "all_solutions.json");
             makeJSON(modelFile).then((model: any) => {
               // const jsonName = modelFile.replace('.essence','')+'.json';
               const modelPath = path.join(wf, "Model.json");

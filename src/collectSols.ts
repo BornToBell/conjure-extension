@@ -10,8 +10,6 @@ export interface solFormat {
 }
 
 export function collectSol(name: string, path: string, params: string[]) {
-  // const files = await findSolsByName(name, path);
-  // // console.log(files);
 
   return new Promise((resolve, rejects) => {
     try {

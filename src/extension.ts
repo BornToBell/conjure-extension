@@ -12,11 +12,11 @@ import { solveOptions } from "./option";
 import { graphicalReport } from "./graphicalReport";
 import * as path from "path";
 import { createChart } from "./createChart";
+import { Terminal } from "vscode";
 
-const cats = {
-  "Coding Cat": "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
-  "Compiling Cat": "https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif",
-};
+
+
+
 
 /**
  * This method is called when your extension is activated
@@ -27,18 +27,20 @@ const cats = {
 export async function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
-  console.log('Congratulations, your extension "conjure-model" is now active!');
+  window.showInformationMessage('Congratulations, your extension "conjure-model" is now active!');
 
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
+  const terminal: Terminal = window.createTerminal();
   let disposable1 = vscode.commands.registerCommand(
     "conjure-model.helloWorld",
     async () => {
       await cleanAll();
       const inputs = await multiStepInput(context);
-      solve(inputs.essence, inputs.directory, inputs.params).then(async(res) => {
-        console.log(res);
+      solve(inputs.essence, inputs.directory, inputs.params, terminal)
+        .then(async (res) => {
+          console.log(res);
           const panel = vscode.window.createWebviewPanel(
             "ReportOption",
             "Comparison report",
@@ -51,7 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
           if (undefined !== vscode.workspace.workspaceFolders) {
             const wf = vscode.workspace.workspaceFolders[0].uri.path;
             const reportPath = path.join(wf, "detailed_report.json");
-            const data = await createChart(reportPath,wf);
+            const data = await createChart(reportPath, wf);
 
             const updateWebview = () => {
               panel.title = "Comparison report";
@@ -59,13 +61,13 @@ export async function activate(context: vscode.ExtensionContext) {
             };
 
             updateWebview();
-            console.log("update");
+
           }
-      })
+        })
         // .then((result) =>
         //   multiStepInput(context).then((inputs) => {
         //     console.log("Input", inputs);
-            
+
         //   })
         // )
         .catch((error) => {
@@ -78,63 +80,42 @@ export async function activate(context: vscode.ExtensionContext) {
   let disposable2 = vscode.commands.registerCommand(
     "conjure-model.option",
     async () => {
-      await cleanAll();
+      await cleanAll(terminal);
       const inputs = await multiStepInput(context);
-      solveOptions(inputs.essence, inputs.directory, inputs.params).then(
-        async (res) => {
-          console.log(res);
-          /**
-           * This code is cited from https://code.visualstudio.com/api/extension-guides/webview
-           */
-          const panel = vscode.window.createWebviewPanel(
-            "ReportOption",
-            "Options report",
-            vscode.ViewColumn.One,
-            {
-              enableScripts: true,
-            }
-          );
-
-          if (undefined !== vscode.workspace.workspaceFolders) {
-            const wf = vscode.workspace.workspaceFolders[0].uri.path;
-            const reportPath = path.join(wf, "detailed_report.json");
-            const data = await createChart(reportPath,wf);
-
-            const updateWebview = () => {
-              // const cat = iteration++ % 2 ? "Compiling Cat" : "Coding Cat";
-              panel.title = "Options comparison report";
-              panel.webview.html = graphicalReport(data);
-            };
-
-            updateWebview();
-            console.log("update");
+      solveOptions(inputs.essence, inputs.directory, inputs.params)
+        .then(
+          async (res) => {
             /**
-             * End of citation
+             * This code is cited from https://code.visualstudio.com/api/extension-guides/webview
              */
-            
+            const panel = vscode.window.createWebviewPanel(
+              "ReportOption",
+              "Options report",
+              vscode.ViewColumn.One,
+              {
+                enableScripts: true,
+              }
+            );
+
+            if (undefined !== vscode.workspace.workspaceFolders) {
+              const wf = vscode.workspace.workspaceFolders[0].uri.path;
+              const reportPath = path.join(wf, "detailed_report.json");
+              const data = await createChart(reportPath, wf);
+
+              const updateWebview = () => {
+                // const cat = iteration++ % 2 ? "Compiling Cat" : "Coding Cat";
+                panel.title = "Options comparison report";
+                panel.webview.html = graphicalReport(data);
+              };
+
+              updateWebview();
+              /**
+               * End of citation
+               */
+
+            }
           }
-        }
-      );
-
-      // cleanAll()
-      //   .then((result) =>
-      //     multiStepInput(context).then((inputs) => {
-
-      //       // console.log(inputs);
-      //     })
-      //   )
-      //   .then(() => {
-
-      //     // let iteration = 0;
-
-      //     // Set initial content
-      //     // // And schedule updates to the content every second
-      //     // setInterval(updateWebview, 1000);
-      //   })
-      //   .catch((error) => {
-      //     console.log(error);
-      //     window.showErrorMessage(error);
-      //   });
+        );
     }
   );
 
@@ -145,4 +126,4 @@ export async function activate(context: vscode.ExtensionContext) {
 /**
  * This method is called when your extension is deactivated
  */
-export function deactivate() {}
+export function deactivate() { }
