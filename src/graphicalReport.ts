@@ -5,7 +5,6 @@ import * as vscode from "vscode";
  */
 export function graphicalReport(data: string[]) {
   const solutionsText = data[0].replace(/\n/g, "<br>");
-  console.log("create charts",data);
   return `<!DOCTYPE html>
     <html lang="en">
     <head>

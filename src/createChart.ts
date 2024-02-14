@@ -1,6 +1,5 @@
-import { time } from "console";
+// import { time } from "console";
 import * as fs from "fs";
-import { utils } from "mocha";
 import path from "path";
 
 
@@ -69,7 +68,6 @@ export async function createChart(
 ): Promise<string[]> {
   return new Promise((resolve, rejects) => {
     try {
-      console.log("Create chart");
       const data = JSON.parse(fs.readFileSync(reportUri, "utf-8"));
       const report: Report = {
         Mode: data.Mode,
@@ -98,13 +96,13 @@ export async function createChart(
       // } else {
       //   data2.Models[0].solutions.forEach((param: Parameter) => params.push(param.parameter));
       // }
-      const indivi = createInddiviChart(allSolUri, report.Difference[0].Solutions.All_solved.Models);
+      const solChart = createSolChart(allSolUri, report.Difference[0].Solutions.All_solved.Models);
       const txt = createTxt(report.Difference[0]);
 
       const combinedData: string[] = [
         txt,
-        JSON.stringify(scatterTimeConfig(indivi[0], indivi[2])),
-        JSON.stringify(scatterNodeConfig(indivi[1], indivi[2])),
+        JSON.stringify(scatterTimeConfig(solChart[0], solChart[2])),
+        JSON.stringify(scatterNodeConfig(solChart[1], solChart[2])),
         JSON.stringify(nodesConfig(nodeData)),
         JSON.stringify(timeConfig(timeData))
       ];
@@ -113,8 +111,7 @@ export async function createChart(
 
       resolve(combinedData);
     } catch (error) {
-      console.log(error);
-      rejects(null);
+      rejects(error);
     }
   });
 }
@@ -149,7 +146,7 @@ export function namedColor(index: number) {
 }
 //end of citation
 
-export function createInddiviChart(allSolUri: string, models: string[]) {
+export function createSolChart(allSolUri: string, models: string[]) {
   const data = JSON.parse(fs.readFileSync(allSolUri, "utf-8"));
   const modelData: solModel[] = data.Models.map((model: any, index: number) => { return { title: model.title, solutions: model.solutions } });
   const params:string[] = [];

@@ -3,12 +3,14 @@ import * as path from "path";
 import * as fs from "fs";
 import { collectSol } from "./collectSols";
 import { detailReport, simpleReport } from "./report";
-import { cleanConjure } from "./clean";
+import { cleanAll, cleanConjure } from "./clean";
 import * as child_process from "child_process";
 import { detailReportOption } from "./optionReport";
+import { Progress } from "./extension";
 
 
 export async function solve(
+  workPath: string,
   modelFile: string,
   paramPath: string,
   paramFiles: string[],
@@ -16,25 +18,13 @@ export async function solve(
 ) {
   return new Promise(async (resolve, reject) => {
     try {
-      const params: string[] = paramFiles.map((file) => `${paramPath}/${file}`);
+      const params: string[] = paramFiles.map((file) => path.join(paramPath,file));
       const model = await makeJSON(modelFile);
       const mod_model = await extractFile(model);
-      await runConjureSolve(model, mod_model, params, paramFiles,terminal);
-      resolve("Finished Comparison process")
-      // makeJSON(modelFile).then((model) =>
-      //   extractFile(model).then((mod_model) => {
-      //     runConjureSolve(model, mod_model, params, paramFiles).then(
-      //       (comparison) => {
-      //         resolve("Finished Compariosn process");
-      //         //   if (comparison) {
-      //         //     resolve("Same solutions");
-      //         //   } else {
-      //         //     resolve("Different solutions");
-      //         //   }
-      //       }
-      //     );
-      //   })
-      // );
+      const jsonData = await runConjureSolve(workPath, model, mod_model, params, paramFiles);
+      const solPath = path.join(workPath, "all_solutions.json");
+      fs.writeFileSync(solPath, jsonData);
+      resolve(await detailReportOption(workPath, solPath, "Compare"))
     } catch (error) {
       reject(error);
     }
@@ -48,7 +38,7 @@ export async function solve(
  */
 export async function extractFile(s: any) {
   // console.log("Modify essence file");
-  const fs = require("fs");
+  // const fs = require("fs");
   var inputData = JSON.parse(s);
 
   // Find the index of the last "SuchThat" key
@@ -104,84 +94,69 @@ export async function makeJSON(fileName: string) {
  * @returns solutions are equal
  */
 export async function runConjureSolve(
+  workPath: string,
   essence: any,
   mod_essence: any,
   fileNames: string[],
   params: string[],
-  terminal:vscode.Terminal
 ) {
   //cite from https://stackoverflow.com/questions/39569993/vs-code-extension-get-full-path
-  const JSONPromise = new Promise(async(resolve, reject) => {
-    if (vscode.workspace.workspaceFolders !== undefined) {
-      let wf = vscode.workspace.workspaceFolders[0].uri.path;
-
-      //Get workspace path
-      const message = `YOUR-EXTENSION: folder: ${wf}`;
-
-      //create two model json files in work space
-      const filePath = path.join(wf, "original.json");
-      const mod_filePath = path.join(wf, "removed.json");
-      const outputPath = path.join(wf, "conjure-output");
+  const JSONPromise = new Promise<string>(async (resolve, reject) => {
+    try {
+      const filePath = path.join(workPath, "original.json");
+      const mod_filePath = path.join(workPath, "removed.json");
+      const outputPath = path.join(workPath, "conjure-output");
       fs.writeFileSync(filePath, essence);
       fs.writeFileSync(mod_filePath, mod_essence);
-      const terminalMessage:string[] = [];
-      //solve models
-      await cleanConjure();
-      await solveModel(filePath, fileNames, wf);
+
+      Progress.appendLine(await solveModel(filePath, fileNames, workPath));
       const data1 = await collectSol("original", outputPath, params);
       await cleanConjure();
-      await solveModel(mod_filePath, fileNames, wf);
-      const data2 = collectSol("removed", outputPath, params);
+      Progress.appendLine(await solveModel(mod_filePath, fileNames, workPath));
+      const data2 = await collectSol("removed", outputPath, params);
       const data = [data1, data2];
       const solutions = {
         Models: data,
       };
-      const jsonData = JSON.stringify(solutions);
-      const solPath = path.join(wf, "all_solutions.json");
-      fs.writeFileSync(solPath,jsonData);
-      await detailReportOption(wf, solPath, "Compare");
-      resolve("Finished comparison")
-      // cleanConjure()
-      //   .then(() => {
-      //     solveModel(filePath, fileNames, wf)
-      //       .then((s1: string) => {
-      //         return collectSol("original", outputPath, params);
-      //       })
-      //       .then((data1) => {
-      //         cleanConjure();
-      //         solveModel(mod_filePath, fileNames, wf)
-      //           .then(() => {
-      //             return collectSol("removed", outputPath, params);
-      //           })
-      //           .then((data2) => {
-      //             const data = [data1, data2];
-      //             const solutions = {
-      //               Models: data,
-      //             };
-      //             const jsonData = JSON.stringify(solutions);
-      //             const solPath = path.join(wf, "all_solutions.json");
-      //             fs.writeFile(solPath, jsonData, (error) => {
-      //               if (error) {
-      //                 terminal.sendText(`Error writing file ${solPath} : ${error}`);
-      //               } else {
-      //                 terminal.sendText(`File ${solPath} written successfully.`);
-      //               }
-      //               // simpleReport(wf, solPath);
-      //               resolve(detailReportOption(wf, solPath, "Compare"));
-      //             });
-      //           });
-      //       });
-      //   })
-      //   .then(() => {
-      //     vscode.window.showInformationMessage("Finished");
-      //   });
-    } else {
-      const message =
-        "Working Space: Working folder not found, open a folder an try again";
-      // console.log(message);
-      vscode.window.showErrorMessage(message);
-      reject(message);
+      resolve(JSON.stringify(solutions));
+    } catch (error) {
+      reject(error);
     }
+
+    // cleanConjure()
+    //   .then(() => {
+    //     solveModel(filePath, fileNames, wf)
+    //       .then((s1: string) => {
+    //         return collectSol("original", outputPath, params);
+    //       })
+    //       .then((data1) => {
+    //         cleanConjure();
+    //         solveModel(mod_filePath, fileNames, wf)
+    //           .then(() => {
+    //             return collectSol("removed", outputPath, params);
+    //           })
+    //           .then((data2) => {
+    //             const data = [data1, data2];
+    //             const solutions = {
+    //               Models: data,
+    //             };
+    //             const jsonData = JSON.stringify(solutions);
+    //             const solPath = path.join(wf, "all_solutions.json");
+    //             fs.writeFile(solPath, jsonData, (error) => {
+    //               if (error) {
+    //                 terminal.sendText(`Error writing file ${solPath} : ${error}`);
+    //               } else {
+    //                 terminal.sendText(`File ${solPath} written successfully.`);
+    //               }
+    //               // simpleReport(wf, solPath);
+    //               resolve(detailReportOption(wf, solPath, "Compare"));
+    //             });
+    //           });
+    //       });
+    //   })
+    //   .then(() => {
+    //     vscode.window.showInformationMessage("Finished");
+    //   });
   });
   return JSONPromise;
 }
@@ -207,7 +182,7 @@ export function solveModel(
       const command = `conjure solve --output-format=json --output-directory=${outDir} ${essencePath} ${joined}`;
       // console.log(`Running conjure solve: ${command}`);
       const result = child_process.execSync(command);
-      resolve(result.toString());
+      resolve(`\n` + result.toString());
 
     } catch (error) {
       reject(error);
@@ -239,12 +214,12 @@ export function checkParam(fileNames: any) {
   });
   return paramPromise;
 }
-function collectInfo(path: string, paramsPath: string[]) {
-  var fullPath: string[] = [];
-  const removedParams = paramsPath.map((p) => p.replace(".param", ""));
-  for (let i = 0; i < paramsPath.length; i++) {
-    fullPath[
-      i
-    ] = `${path}/conjure-output/model000001-${removedParams[i]}.eprime-info`;
-  }
-}
+// function collectInfo(path: string, paramsPath: string[]) {
+//   var fullPath: string[] = [];
+//   const removedParams = paramsPath.map((p) => p.replace(".param", ""));
+//   for (let i = 0; i < paramsPath.length; i++) {
+//     fullPath[
+//       i
+//     ] = `${path}/conjure-output/model000001-${removedParams[i]}.eprime-info`;
+//   }
+// }

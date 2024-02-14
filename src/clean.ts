@@ -3,6 +3,8 @@ import { unlink } from "fs";
 import { readdir } from "fs/promises";
 import * as fs from "fs";
 import * as path from "path";
+import { Progress } from "./extension";
+
 
 
 
@@ -14,7 +16,6 @@ export async function cleanAll() {
             reject(message);
         } else {
             const promises: any[] = [];
-
             promises.push(deleteFilesExt('.json', path));
             promises.push(deleteFilesExt('.solution', path));
             promises.push(deleteDir('conjure-output', path));
@@ -56,9 +57,10 @@ function deleteDir(dir: string, dirPath: string) {
         try {
             const fullPath = path.join(dirPath, dir);
             if (!fs.existsSync(fullPath)) {
-                resolve("Already deleted");
+                resolve("");
             } else {
                 fs.rmSync(fullPath, { recursive: true })
+                Progress.appendLine(`${fullPath} was deleted`)
                 resolve(`${fullPath} was deleted`);
             }
 
@@ -79,7 +81,7 @@ async function deleteFilesExt(ext: string, dir: string) {
                     console.error(err.message);
                     return;
                 }
-                deleted.push(`${file} was deleted`);
+                Progress.appendLine(`${file} was deleted`);
             });
         });
 
