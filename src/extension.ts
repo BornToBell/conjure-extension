@@ -24,6 +24,8 @@ export const Progress = window.createOutputChannel("Progress");
  */
 
 export async function activate(context: vscode.ExtensionContext) {
+  Progress.clear();
+  Progress.show();
   window.showInformationMessage('Congratulations, your extension "conjure-model" is now active!');
   let disposable1 = vscode.commands.registerCommand(
     "conjure-model.helloWorld",

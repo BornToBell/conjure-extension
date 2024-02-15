@@ -135,9 +135,14 @@ export function solveModel(
       const joined = paramsPath.join(" ");
       const outDir = path.join(solPath, "conjure-output");
       const command = `conjure solve --output-format=json --output-directory=${outDir} ${essencePath} ${joined}`;
-      const result = child_process.execSync(command);
-      resolve(`\n` + result.toString());
-
+      resolve(child_process.execSync(command).toString());
+      // exec(command, (err: any, output: any) => {
+      //   if (err) {
+      //     reject(err);
+      //   } else {
+      //     resolve('\n'+output.toString());
+      //   }
+      // });
     } catch (error) {
       reject(error);
     }
