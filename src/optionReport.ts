@@ -64,6 +64,7 @@ export async function detailReportOption(dir: string, solPath: string,mode:strin
       
       const jsonData = JSON.stringify(output);
       const diffPath = path.join(dir, "detailed_report.json");
+
       resolve(fs.writeFileSync(diffPath, jsonData));
     } catch (error) {
       reject(error);

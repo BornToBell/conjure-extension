@@ -12,6 +12,8 @@ import { solveOptions } from "./option";
 import { graphicalReport } from "./graphicalReport";
 import * as path from "path";
 import { createChart } from "./createChart";
+import * as fs from "fs";
+
 
 
 
@@ -26,7 +28,7 @@ export const Progress = window.createOutputChannel("Progress");
 export async function activate(context: vscode.ExtensionContext) {
   Progress.clear();
   Progress.show();
-  window.showInformationMessage('Congratulations, your extension "conjure-model" is now active!');
+  window.showInformationMessage('Congratulations, Conjure Model Helper is now active!');
   let disposable1 = vscode.commands.registerCommand(
     "conjure-model.helloWorld",
     async () => {
@@ -49,7 +51,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
           const updateWebview = () => {
             panel.title = "Comparison report";
-            panel.webview.html = graphicalReport(data);
+            const html = graphicalReport(data);
+            panel.webview.html = html;
+            const htmlPath = path.join(wf, "Report.html");
+            fs.writeFileSync(htmlPath,html);
           };
 
           updateWebview();
@@ -84,7 +89,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
           const updateWebview = () => {
             panel.title = "Options comparison report";
-            panel.webview.html = graphicalReport(data);
+            const html = graphicalReport(data);
+            panel.webview.html = html;
+            const htmlPath = path.join(wf, "Report.html");
+            fs.writeFileSync(htmlPath,html);
           };
 
           updateWebview();
