@@ -30,7 +30,7 @@ export async function activate(context: vscode.ExtensionContext) {
   Progress.show();
   window.showInformationMessage('Congratulations, Conjure Model Helper is now active!');
   let disposable1 = vscode.commands.registerCommand(
-    "conjure-model.helloWorld",
+    "conjure-model.compare",
     async () => {
       try {
         if (undefined !== vscode.workspace.workspaceFolders) {
