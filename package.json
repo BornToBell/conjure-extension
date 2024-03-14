@@ -1,4 +1,3 @@
-
 {
   "name": "conjure-analyzer",
   "displayName": "Conjure Analyzer",
@@ -58,9 +57,13 @@
     "url": "git+https://github.com/BornToBell/conjure-extension.git"
   },
   "author": "Yui Nagasaka",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/BornToBell/conjure-extension/issues"
   },
-  "homepage": "https://github.com/BornToBell/conjure-extension#readme"
+  "homepage": "https://github.com/BornToBell/conjure-extension#readme",
+  "keywords": [
+    "conjure",
+    "constraint programming"
+  ]
 }
