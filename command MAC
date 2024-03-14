@@ -1,0 +1,4 @@
+vi ~/.bashrc
+export PATH="/Users/nagasakayui/Desktop/conjure/conjureInstall:/Users/nagasakayui/Desktop/conjure/conjureSolver:$PATH"
+source ~/.bashrc
+

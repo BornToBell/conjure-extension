@@ -1,7 +1,7 @@
 {
-  "name": "conjure-model",
-  "displayName": "conjure-model",
-  "description": "",
+  "name": "conjure-analyzer",
+  "displayName": "Conjure Analyzer",
+  "description": "Enhance your modeling workflow by seamlessly integrating Conjure functionalities within Visual Studio Code. Easily compare model files with different parameters, generate reports, and visualize solver performance, all from within your workspace.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.84.0"
