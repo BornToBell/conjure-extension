@@ -136,7 +136,7 @@ export function solveModel(
       const outDir = path.join(solPath, "conjure-output");
       const command = `conjure solve --output-format=json --output-directory=${outDir} ${essencePath} ${joined}`;
       const log = child_process.execSync(command).toString();
-      console.log(log)
+      // console.log(log)
       resolve(log);
       // exec(command, (err: any, output: any) => {
       //   if (err) {

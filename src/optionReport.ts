@@ -8,6 +8,7 @@ import {
   countTime,
   Model,
 } from "./report";
+import { NONAME } from "dns";
 
 export async function detailReportOption(dir: string, solPath: string,mode:string) {
   return new Promise((resolve, reject) => {
@@ -28,6 +29,7 @@ export async function detailReportOption(dir: string, solPath: string,mode:strin
       models.forEach((model: Model) => {
         const paramFile = findParams(model);
         const nonEmptySol = findNonEmptySolutions(model);
+        const EmptySol = paramFile.filter(param => !nonEmptySol.includes(param));
 
         const nodes = countNodes(model);
         const time = countTime(model);
@@ -42,9 +44,17 @@ export async function detailReportOption(dir: string, solPath: string,mode:strin
           });
         } else if (nonEmptySol.length === 0) {
           nModels.push(model.title);
+          solInfo.push({
+            Model: model.title,
+            Not_Solved:EmptySol,
+          });
           noSol++;
         } else {
           pModels.push(model.title);
+          solInfo.push({
+            Model: model.title,
+            Not_Solved:EmptySol,
+          });
           parSol++;
         }
       });
@@ -55,6 +65,7 @@ export async function detailReportOption(dir: string, solPath: string,mode:strin
           Partial_solved: { Number: parSol, Models: pModels },
           No_solution: { Number: noSol, Models: nModels },
         },
+
       });
 
       const output = {
