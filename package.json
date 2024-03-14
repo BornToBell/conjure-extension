@@ -15,11 +15,13 @@
     "commands": [
       {
         "command": "conjure-model.option",
-        "title": "Option"
+        "title": "Option",
+        "description": "Generate and compare multiple models based on groups in the essence file"
       },
       {
         "command": "conjure-model.compare",
-        "title": "Compare1"
+        "title": "Compare",
+        "description": "Generate and compare two model from one essence file and compare"
       }
     ]
   },
