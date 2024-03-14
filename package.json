@@ -44,5 +44,26 @@
     "mocha": "^10.2.0",
     "typedoc": "^0.25.4",
     "typescript": "^5.2.2"
-  }
+  },
+  "dependencies": {
+    "@vscode/vsce": "^2.24.0",
+    "vsce": "^2.15.0"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BornToBell/conjure-extension.git"
+  },
+  "author": "Yui Nagasaka",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BornToBell/conjure-extension/issues"
+  },
+  "homepage": "https://github.com/BornToBell/conjure-extension#readme",
+  "keywords": [
+    "conjure",
+    "constraint programming"
+  ]
 }

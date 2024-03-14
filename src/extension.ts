@@ -28,7 +28,7 @@ export const Progress = window.createOutputChannel("Progress");
 export async function activate(context: vscode.ExtensionContext) {
   Progress.clear();
   Progress.show();
-  window.showInformationMessage('Congratulations, Conjure Model Helper is now active!');
+  window.showInformationMessage('Congratulations, Conjure Analyzer is now active!');
   let disposable1 = vscode.commands.registerCommand(
     "conjure-model.compare",
     async () => {
@@ -59,12 +59,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
           updateWebview();
         } else {
-          throw new Error("Working Space: Working folder not found, open a folder an try again")
+          throw new Error("Working Space: Working folder not found, open a folder an try again");
         }
       } catch (error) {
-        Progress.appendLine(`${error}`)
+        Progress.appendLine(`${error}`);
       }
-    })
+    });
 
 
   let disposable2 = vscode.commands.registerCommand(
@@ -97,10 +97,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
           updateWebview();
         } else {
-          throw new Error("Working Space: Working folder not found, open a folder an try again")
+          throw new Error("Working Space: Working folder not found, open a folder an try again");
         }
       } catch (error) {
-        Progress.appendLine(`${error}`)
+        Progress.appendLine(`${error}`);
       }
 
     }
