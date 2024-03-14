@@ -41,7 +41,7 @@ export function cleanConjure() {
                 // terminal.sendText(result.join(' '));
                 resolve(result.join(' '));
             }).catch((error) => {
-                reject(error)
+                reject(error);
                 // terminal.sendText(error);
             });
 
@@ -58,8 +58,8 @@ function deleteDir(dir: string, dirPath: string) {
             if (!fs.existsSync(fullPath)) {
                 resolve("");
             } else {
-                fs.rmSync(fullPath, { recursive: true })
-                Progress.appendLine(`${fullPath} was deleted`)
+                fs.rmSync(fullPath, { recursive: true });
+                Progress.appendLine(`${fullPath} was deleted`);
                 resolve(`${fullPath} was deleted`);
             }
 

@@ -22,7 +22,7 @@ export async function solve(
       const jsonData = await runConjureSolve(workPath, model, mod_model, params, paramFiles);
       const solPath = path.join(workPath, "all_solutions.json");
       fs.writeFileSync(solPath, jsonData);
-      resolve(await detailReportOption(workPath, solPath, "Compare"))
+      resolve(await detailReportOption(workPath, solPath, "Compare"));
     } catch (error) {
       reject(error);
     }
