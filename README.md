@@ -10,7 +10,7 @@
 
 ## Features
 
-This extension provides two commands accessible from the command palette:
+This extension offers two commands accessible from the command palette. To utilize the commands, ensure that the Essence file and the necessary parameter files, or a directory containing parameter files, are present within the VS Code workspace.
 
 ### `Compare`
 
