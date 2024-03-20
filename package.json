@@ -15,13 +15,13 @@
     "commands": [
       {
         "command": "conjure-model.option",
-        "title": "Option",
+        "title": "Option : Generates and solves model files based on specified combinations of constraints for performance comparison.",
         "description": "Generate and compare multiple models based on groups in the essence file"
       },
       {
         "command": "conjure-model.compare",
-        "title": "Compare",
-        "description": "Generate and compare two model from one essence file and compare"
+        "title": "Compare : Generates and solves model files with and without specific constraints for performance comparison.",
+        "description": "Generate and compare two models from one essence file"
       }
     ]
   },
