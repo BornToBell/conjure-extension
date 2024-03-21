@@ -306,7 +306,7 @@ function createTxt(solutions: Solutions, models: Model[]) {
   const partiallyResolvedText = `Partially resolved models: ${solutions.Solutions.Partial_solved.Models.join(', ')}\n`;
 
   const partModel: Model[] = models.filter(model => solutions.Solutions.Partial_solved.Models.includes(model.Model));
-  const part = partModel.map(model => `\t${model.Model} : ${model.Not_Solved}\n`).join('');
+  const part = partModel.map(model => `\t${model.Model} (Not Solved) : ${model.Not_Solved}\n`).join('');
 
   let notResolvedText = `Models not resolved at all: ${solutions.Solutions.No_solution.Models.join(', ')}\n`;
 
