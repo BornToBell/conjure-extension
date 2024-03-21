@@ -121,3 +121,7 @@ Initial release of Conjure Analyzer
 ### 1.0.1
 
 Unsolvable parameter files are displayed
+
+### 1.0.1
+
+Add short description in command palette and add a message in the report.
